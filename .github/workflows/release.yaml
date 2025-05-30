@@ -52,12 +52,12 @@ jobs:
       run: |
         # Create .cr-release-packages directory
         mkdir -p .cr-release-packages
-        
+
         # Package the chart
         helm package mariadb-library-chart --destination .cr-release-packages
-        
+
         # Upload chart packages to GitHub Releases
         cr upload --config .github/cr.yaml
-        
+
         # Update Helm repository index and push to gh-pages
         cr index --config .github/cr.yaml --push
