@@ -11,6 +11,8 @@ jobs:
   release:
     permissions:
       contents: write
+      pages: write
+      id-token: write
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -23,15 +25,39 @@ jobs:
         git config user.name "$GITHUB_ACTOR"
         git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
+    - name: Check for chart changes and version bump
+      run: |
+        # Check if the chart version has been updated
+        if git diff HEAD~1 --name-only | grep -q "mariadb-library-chart/Chart.yaml"; then
+          echo "Chart.yaml was modified, proceeding with release"
+        else
+          echo "No changes to Chart.yaml, skipping release"
+          exit 0
+        fi
+
     - name: Install Helm
       uses: azure/setup-helm@v4
       with:
         version: v3.14.0
 
-    - name: Run chart-releaser
-      uses: helm/chart-releaser-action@v1.6.0
+    - name: Add chart-releaser
+      run: |
+        wget https://github.com/helm/chart-releaser/releases/download/v1.6.1/chart-releaser_1.6.1_linux_amd64.tar.gz
+        tar -xzf chart-releaser_1.6.1_linux_amd64.tar.gz
+        sudo mv cr /usr/local/bin/cr
+
+    - name: Package and release charts
       env:
         CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-      with:
-        charts_dir: .
-        config: .github/cr.yaml
+      run: |
+        # Create .cr-release-packages directory
+        mkdir -p .cr-release-packages
+        
+        # Package the chart
+        helm package mariadb-library-chart --destination .cr-release-packages
+        
+        # Upload chart packages to GitHub Releases
+        cr upload --config .github/cr.yaml
+        
+        # Update Helm repository index and push to gh-pages
+        cr index --config .github/cr.yaml --push
