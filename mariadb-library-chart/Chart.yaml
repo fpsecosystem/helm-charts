@@ -1,0 +1,19 @@
+apiVersion: v2
+name: mariadb-library-chart
+description: A Helm library chart for managing MariaDB databases and users using the MariaDB operator
+type: library
+version: 0.1.0
+appVersion: "1.0"
+home: https://github.com/fpsecosystem/helm-charts
+sources:
+- https://github.com/fpsecosystem/helm-charts
+maintainers:
+- name: FPS Ecosystem
+  email: contact@fpsecosystem.org
+keywords:
+- mariadb
+- database
+- library
+- operator
+annotations:
+  category: Database

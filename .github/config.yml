@@ -1,0 +1,13 @@
+# Configuration for FPS Ecosystem Helm Charts Repository
+
+blank_issues_enabled: false
+contact_links:
+- name: 📚 Documentation
+  url: https://github.com/fpsecosystem/helm-charts/blob/main/README.md
+  about: Read the documentation for detailed usage instructions
+- name: 💡 Feature Request
+  url: https://github.com/fpsecosystem/helm-charts/discussions
+  about: Suggest new features or improvements
+- name: ❓ General Question
+  url: https://github.com/fpsecosystem/helm-charts/discussions
+  about: Ask questions about using the charts

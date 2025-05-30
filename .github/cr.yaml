@@ -1,0 +1,7 @@
+owner: fpsecosystem
+git-repo: helm-charts
+charts-repo: https://fpsecosystem.github.io/helm-charts
+target-branch: gh-pages
+index-path: index.yaml
+packages-with-index: true
+release-name-template: "{{ .Name }}-{{ .Version }}"

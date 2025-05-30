@@ -1,0 +1,99 @@
+# Default values for mariadb-library-chart
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global configuration
+global:
+  # MariaDB operator namespace (where the operator is installed)
+  mariadbOperatorNamespace: "mariadb-system"
+
+# Database configuration
+database:
+  # Enable database creation
+  enabled: true
+  # Database name
+  name: ""
+  # MariaDB instance reference
+  mariaDbRef:
+    # Name of the MariaDB instance
+    name: "mariadb"
+    # Namespace of the MariaDB instance (optional, defaults to release namespace)
+    namespace: ""
+  # Character set for the database
+  characterSet: "utf8mb4"
+  # Collation for the database
+  collate: "utf8mb4_unicode_ci"
+  # Additional labels for the database resource
+  labels: {}
+  # Additional annotations for the database resource
+  annotations: {}
+
+# User configuration
+user:
+  # Enable user creation
+  enabled: true
+  # Username
+  name: ""
+  # Password secret configuration
+  passwordSecret:
+    # Name of the secret containing the password
+    name: ""
+    # Key in the secret containing the password
+    key: "password"
+    # If true, will generate a secret with random password
+    generate: false
+    # Length of generated password
+    passwordLength: 16
+  # Host from which the user can connect (% for any host)
+  host: "%"
+  # MariaDB instance reference
+  mariaDbRef:
+    # Name of the MariaDB instance
+    name: "mariadb"
+    # Namespace of the MariaDB instance (optional, defaults to release namespace)
+    namespace: ""
+  # Maximum user connections
+  maxUserConnections: 10
+  # Additional labels for the user resource
+  labels: {}
+  # Additional annotations for the user resource
+  annotations: {}
+
+# Grant configuration
+grant:
+  # Enable grant creation
+  enabled: true
+  # Database to grant permissions on
+  database: ""
+  # User to grant permissions to
+  username: ""
+  # Table to grant permissions on (* for all tables)
+  table: "*"
+  # Privileges to grant
+  privileges:
+  - "SELECT"
+  - "INSERT"
+  - "UPDATE"
+  - "DELETE"
+  - "CREATE"
+  - "DROP"
+  - "INDEX"
+  - "ALTER"
+  # Host from which the user can connect
+  host: "%"
+  # MariaDB instance reference
+  mariaDbRef:
+    # Name of the MariaDB instance
+    name: "mariadb"
+    # Namespace of the MariaDB instance (optional, defaults to release namespace)
+    namespace: ""
+  # Additional labels for the grant resource
+  labels: {}
+  # Additional annotations for the grant resource
+  annotations: {}
+
+# Common labels applied to all resources
+commonLabels: {}
+
+# Common annotations applied to all resources
+commonAnnotations: {}

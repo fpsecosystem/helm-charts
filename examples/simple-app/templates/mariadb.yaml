@@ -1,0 +1,21 @@
+# MariaDB Database, User, and Grant resources using the library chart
+{{- $libValues := index .Values "mariadb-library-chart" -}}
+{{- $context := dict "Values" $libValues "Chart" .Chart "Release" .Release -}}
+
+{{- if $libValues.database.enabled }}
+{{ include "mariadb-library.database" $context }}
+{{- end }}
+
+{{- if $libValues.user.enabled }}
+{{- if $libValues.user.passwordSecret.generate }}
+---
+{{ include "mariadb-library.secret" $context }}
+{{- end }}
+---
+{{ include "mariadb-library.user" $context }}
+{{- end }}
+
+{{- if $libValues.grant.enabled }}
+---
+{{ include "mariadb-library.grant" $context }}
+{{- end }}

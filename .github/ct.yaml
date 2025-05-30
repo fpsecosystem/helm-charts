@@ -1,0 +1,10 @@
+---
+# ct.yaml
+target-branch: main
+chart-dirs:
+- .
+chart-repos:
+- mariadb-operator=https://mariadb-operator.github.io/mariadb-operator
+helm-extra-args: --timeout 600s
+check-version-increment: true
+debug: true
