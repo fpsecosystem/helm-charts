@@ -10,8 +10,8 @@ dependencies:
   version: "4.0.1"
   repository: "https://bjw-s-labs.github.io/helm-charts"
 - name: mariadb-library-chart
-  version: "0.1.2"
-  repository: "file://../mariadb-library-chart"
+  version: "0.2.0"
+  repository: "https://fpsecosystem.github.io/helm-charts"
 
 maintainers:
 - name: FPS Ecosystem
