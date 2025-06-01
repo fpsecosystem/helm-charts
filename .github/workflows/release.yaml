@@ -57,6 +57,15 @@ jobs:
         for chart in helm-charts/*; do
           if [ -d "$chart" ] && [ -f "$chart/Chart.yaml" ]; then
             echo "Packaging $chart..."
+            # Copy dependencies to charts/ before packaging
+            mkdir -p "$chart/charts"
+            for dep in $(yq e '.dependencies[].name' "$chart/Chart.yaml"); do
+              dep_version=$(yq e ".dependencies[] | select(.name == \"$dep\") | .version" "$chart/Chart.yaml")
+              dep_file="helm-charts/$dep-$dep_version.tgz"
+              if [ -f "$dep_file" ]; then
+                cp "$dep_file" "$chart/charts/"
+              fi
+            done
             helm package "$chart" --destination .cr-release-packages
           fi
         done
