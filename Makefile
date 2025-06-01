@@ -114,4 +114,7 @@ bump-version-chart: ## Bump version for a specific chart (usage: make bump-versi
 	fi
 	@./bump-version-multi.sh $(CHART) $(TYPE)
 
+test-repository: ## Test the published Helm repository
+	@./test-repository.sh
+
 all: install-deps lint test package ## Run all checks and build
