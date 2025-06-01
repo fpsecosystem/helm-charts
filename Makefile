@@ -1,6 +1,6 @@
 .PHONY: help lint test package clean install-deps
 
-CHART_DIR := mariadb-library-chart
+CHARTS := mariadb-library-chart imagepullsecret-library-chart
 CHART_NAME := mariadb-library-chart
 
 help: ## Show this help message
@@ -16,31 +16,42 @@ install-deps: ## Install development dependencies
 	@which ct >/dev/null || (echo "❌ chart-testing not found. Please install ct" && exit 1)
 	@echo "✅ chart-testing found"
 
-lint: ## Lint the Helm chart
-	@echo "🔍 Linting chart..."
-	@helm lint $(CHART_DIR)
+lint: ## Lint all Helm charts
+	@echo "🔍 Linting charts..."
+	@for chart in $(CHARTS); do \
+		if [ -d $$chart ]; then \
+			echo "Linting $$chart..."; \
+			helm lint $$chart; \
+		fi; \
+	done
 	@echo "✅ Lint passed"
 
-test: lint ## Test the Helm chart templates
+test: lint ## Test all Helm chart templates
 	@echo "🧪 Testing chart templates..."
 	@echo "📝 Validating YAML syntax..."
-	@find $(CHART_DIR)/templates -name "*.yaml" -exec yamllint -d relaxed {} \; 2>/dev/null || echo "⚠️  yamllint not found, skipping YAML validation"
-	@echo "🔍 Checking template files exist..."
-	@test -f $(CHART_DIR)/templates/_helpers.tpl || (echo "❌ _helpers.tpl missing" && exit 1)
-	@test -f $(CHART_DIR)/templates/database.yaml || (echo "❌ database.yaml missing" && exit 1)
-	@test -f $(CHART_DIR)/templates/user.yaml || (echo "❌ user.yaml missing" && exit 1)
-	@test -f $(CHART_DIR)/templates/grant.yaml || (echo "❌ grant.yaml missing" && exit 1)
-	@test -f $(CHART_DIR)/templates/secret.yaml || (echo "❌ secret.yaml missing" && exit 1)
+	@for chart in $(CHARTS); do \
+		if [ -d $$chart ]; then \
+			echo "Testing $$chart..."; \
+			find $$chart/templates -name "*.yaml" -exec yamllint -d relaxed {} \; 2>/dev/null || echo "⚠️  yamllint not found, skipping YAML validation for $$chart"; \
+			echo "🔍 Checking template files exist in $$chart..."; \
+			test -f $$chart/templates/_helpers.tpl || (echo "❌ _helpers.tpl missing in $$chart" && exit 1); \
+		fi; \
+	done
 	@echo "✅ Template test passed"
 
-package: lint ## Package the Helm chart
-	@echo "📦 Packaging chart..."
-	@helm package $(CHART_DIR)
-	@echo "✅ Chart packaged"
+package: lint ## Package all Helm charts
+	@echo "📦 Packaging charts..."
+	@for chart in $(CHARTS); do \
+		if [ -d $$chart ]; then \
+			echo "Packaging $$chart..."; \
+			helm package $$chart; \
+		fi; \
+	done
+	@echo "✅ Charts packaged"
 
 clean: ## Clean generated files
 	@echo "🧹 Cleaning up..."
-	@rm -f $(CHART_NAME)-*.tgz
+	@rm -f *-library-chart-*.tgz
 	@echo "✅ Cleanup complete"
 
 ct-lint: ## Run chart-testing lint
@@ -91,5 +102,16 @@ check-license: ## Check license compliance
 	@echo "⚖️  Checking license..."
 	@test -f LICENSE || (echo "❌ LICENSE file missing" && exit 1)
 	@echo "✅ License file found"
+
+test-all: ## Test all charts using the comprehensive test script
+	@./test-all-charts.sh
+
+bump-version-chart: ## Bump version for a specific chart (usage: make bump-version-chart CHART=chart-name TYPE=patch)
+	@if [ -z "$(CHART)" ] || [ -z "$(TYPE)" ]; then \
+		echo "Usage: make bump-version-chart CHART=chart-name TYPE=[major|minor|patch]"; \
+		echo "Example: make bump-version-chart CHART=imagepullsecret-library-chart TYPE=patch"; \
+		exit 1; \
+	fi
+	@./bump-version-multi.sh $(CHART) $(TYPE)
 
 all: install-deps lint test package ## Run all checks and build

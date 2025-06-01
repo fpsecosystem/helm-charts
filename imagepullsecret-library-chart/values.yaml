@@ -1,0 +1,28 @@
+# Default values for imagepullsecret-library-chart
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Image pull secret configuration
+imagePullSecret:
+  # Enable image pull secret creation
+  enabled: true
+  # Name of the secret (auto-generated if empty)
+  name: ""
+  # Docker registry configuration
+  registry: "registry.example.com"
+  # Registry username
+  username: ""
+  # Registry password
+  password: ""
+  # Email for the registry (optional)
+  email: ""
+  # Additional labels for the secret resource
+  labels: {}
+  # Additional annotations for the secret resource
+  annotations: {}
+
+# Common labels applied to all resources
+commonLabels: {}
+
+# Common annotations applied to all resources
+commonAnnotations: {}

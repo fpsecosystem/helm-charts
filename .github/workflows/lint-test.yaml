@@ -4,11 +4,13 @@ on:
   pull_request:
     paths:
     - 'mariadb-library-chart/**'
+    - 'imagepullsecret-library-chart/**'
   push:
     branches:
     - main
     paths:
     - 'mariadb-library-chart/**'
+    - 'imagepullsecret-library-chart/**'
 
 jobs:
   lint-test:

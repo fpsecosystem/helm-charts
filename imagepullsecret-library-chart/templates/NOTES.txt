@@ -1,0 +1,31 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+{{- if .Values.imagePullSecret.enabled }}
+
+Image Pull Secret created:
+  Name: {{ include "imagepullsecret-library.secretName" . }}
+  Registry: {{ .Values.imagePullSecret.registry }}
+  Username: {{ .Values.imagePullSecret.username }}
+
+To use this secret in your deployments, add it to your pod spec:
+
+  spec:
+    imagePullSecrets:
+      - name: {{ include "imagepullsecret-library.secretName" . }}
+
+Or reference it in your values.yaml:
+
+  imagePullSecrets:
+    - name: {{ include "imagepullsecret-library.secretName" . }}
+
+{{- else }}
+
+Image Pull Secret creation is disabled.
+Set imagePullSecret.enabled=true to create the secret.
+
+{{- end }}
+
+For more information about using image pull secrets, visit:
+https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/

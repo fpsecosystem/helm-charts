@@ -1,0 +1,17 @@
+# Example values for testing the imagepullsecret-library-chart
+
+# Image pull secret configuration
+imagePullSecret:
+  enabled: true
+  name: "my-registry-secret"
+  registry: "registry.gitlab.com"
+  username: "myuser"
+  password: "mytoken"
+  email: "user@example.com"
+
+# Common labels and annotations
+commonLabels:
+  app.kubernetes.io/part-of: "example-application"
+
+commonAnnotations:
+  example.com/managed-by: "helm"
