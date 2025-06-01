@@ -11,6 +11,7 @@ on:
     - 'helm-charts/**'
   workflow_dispatch:
 
+
 jobs:
   release:
     permissions:
@@ -68,6 +69,11 @@ jobs:
               dep_file="helm-charts/$dep-$dep_version.tgz"
               if [ -f "$dep_file" ]; then
                 cp "$dep_file" "$chart/charts/"
+              else
+                # Try workspace root as fallback
+                if [ -f "$dep-$dep_version.tgz" ]; then
+                  cp "$dep-$dep_version.tgz" "$chart/charts/"
+                fi
               fi
             done
             helm package "$chart" --destination .cr-release-packages
