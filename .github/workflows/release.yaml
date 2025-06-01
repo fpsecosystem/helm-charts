@@ -68,8 +68,10 @@ jobs:
                 if [ "$dep" = "common" ]; then
                   helm repo add bjw-s https://bjw-s-labs.github.io/helm-charts
                   helm pull bjw-s/common --version "$dep_version" --destination helm-charts
+                elif [ "$dep" = "mariadb-library-chart" ]; then
+                  # Package the local mariadb-library-chart if not present
+                  helm package helm-charts/mariadb-library-chart --destination helm-charts
                 else
-                  # For other dependencies, try to pull from their repo if available
                   echo "Dependency $dep not found and not handled automatically. Please add logic if needed."
                 fi
               fi
