@@ -16,25 +16,26 @@ appConfig:
     # APP_SECRET: "change-me-in-production"
     # Add any sensitive env vars here
     # ANOTHER_SECRET: "secret-value"
-image:
-  repository: "php:8.2-apache"
-  tag: "latest"
-  pullPolicy: "Always"
 
-resources:
-  limits:
-    cpu: 500m
-    memory: 512Mi
-  requests:
-    cpu: 100m
-    memory: 128Mi
-
-# bjw-s common library configuration
+    # bjw-s common library configuration
 controllers:
   main:
     annotations: {}
     labels: {}
     replicas: 1
+    containers:
+      main:
+        image:
+          repository: "php:8.2-apache"
+          tag: "latest"
+          pullPolicy: "Always"
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
 
 # Service configuration
 service:

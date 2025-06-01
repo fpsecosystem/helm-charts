@@ -1,5 +1,5 @@
 1. Get the application URL by running these commands:
-{{- if .Values.ingress.main.enabled }}
+{{- if and .Values.ingress.main (hasKey .Values.ingress.main "enabled") (eq .Values.ingress.main.enabled true) }}
 {{- range $host := .Values.ingress.main.hosts }}
   {{- range .paths }}
   http{{ if $.Values.ingress.main.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
@@ -18,14 +18,15 @@
    - Database Version: {{ include "application.mariadbVersion" . }}
    - Database Name: {{ printf "%s-db" (include "application.fullname" .) }}
    - Database User: {{ printf "%s-user" (include "application.fullname" .) }}
+   - Image: {{ .Values.controllers.main.containers.main.image.repository }}:{{ .Values.controllers.main.containers.main.image.tag }}
 
 3. To get the database password:
    kubectl get secret --namespace {{ .Release.Namespace }} {{ include "application.databasePasswordSecretName" . }} -o jsonpath="{.data.{{ include "application.databasePasswordSecretKey" . }}}" | base64 --decode
 
 4. Application deployment details:
    - Environment: {{ .Values.appConfig.APP_ENV }}
-   - Image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
-   - Pull Policy: {{ .Values.image.pullPolicy }}
+   - Image: {{ .Values.controllers.main.containers.main.image.repository }}:{{ .Values.controllers.main.containers.main.image.tag }}
+   - Pull Policy: {{ .Values.controllers.main.containers.main.image.pullPolicy }}
 
 5. To connect to the database directly:
    kubectl run {{ include "application.fullname" . }}-mysql-client --rm --tty -i --restart='Never' --image docker.io/bitnami/mysql:8.0-debian-11 --namespace {{ .Release.Namespace }} --command -- mysql -h {{ include "application.mariadbHost" . }} -P {{ include "application.mariadbPort" . }} -u {{ printf "%s-user" (include "application.fullname" .) }} -p{{ `$(kubectl get secret --namespace {{ .Release.Namespace }} {{ include "application.databasePasswordSecretName" . }} -o jsonpath="{.data.{{ include "application.databasePasswordSecretKey" . }}}" | base64 --decode)` }} {{ printf "%s-db" (include "application.fullname" .) }}

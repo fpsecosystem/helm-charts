@@ -8,7 +8,7 @@ that can be updated by an external controller or post-install hook
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "application.fullname" . }}
+  name: {{ include "application.fullname" $ }}
   labels:
     {{- include "application.labels" . | nindent 4 }}
   annotations:

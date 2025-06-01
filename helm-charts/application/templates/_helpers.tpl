@@ -9,15 +9,14 @@ Expand the name of the chart.
 Create a default fully qualified app name.
 */}}
 {{- define "application.fullname" -}}
-{{- $root := . }}
-{{- if (get $root.Values "fullnameOverride") }}
-{{- $root.Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- if .Values.fullnameOverride }}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
-{{- $name := default $root.Chart.Name $root.Values.nameOverride }}
-{{- if contains $name $root.Release.Name }}
-{{- $root.Release.Name | trunc 63 | trimSuffix "-" }}
+{{- $name := default .Chart.Name .Values.nameOverride }}
+{{- if contains $name .Release.Name }}
+{{- .Release.Name | trunc 63 | trimSuffix "-" }}
 {{- else }}
-{{- printf "%s-%s" $root.Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 {{- end }}
 {{- end }}

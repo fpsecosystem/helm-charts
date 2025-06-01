@@ -3,24 +3,24 @@ Configure the main container with image and environment variables
 */}}
 {{- /* Configure the main container */ -}}
 {{- $mainContainer := dict }}
-{{- $_ := set $mainContainer "image" .Values.image }}
-{{- $_ := set $mainContainer "resources" .Values.resources }}
+{{- $_ := set $mainContainer "image" .Values.controllers.main.containers.main.image }}
+{{- $_ := set $mainContainer "resources" .Values.controllers.main.containers.main.resources }}
 
 {{- /* Start with a clean env map */ -}}
 {{- $envMap := dict }}
 
 {{- /* Add database environment variables */ -}}
-{{- $_ := set $envMap "DATABASE_URL" (dict "valueFrom" (dict "secretKeyRef" (dict "name" (printf "%s-config" (include "application.fullname" .)) "key" "DATABASE_URL"))) }}
+{{- $_ := set $envMap "DATABASE_URL" (dict "valueFrom" (dict "secretKeyRef" (dict "name" (printf "%s-config" (include "application.fullname" $)) "key" "DATABASE_URL"))) }}
 {{- $_ := set $envMap "DATABASE_PASSWORD" (dict "valueFrom" (dict "secretKeyRef" (dict "name" (include "application.databasePasswordSecretName" .) "key" (include "application.databasePasswordSecretKey" .)))) }}
 
 {{- /* Add all configMap variables dynamically */ -}}
 {{- range $key, $value := .Values.appConfig.configMap }}
-{{- $_ := set $envMap $key (dict "valueFrom" (dict "configMapKeyRef" (dict "name" (printf "%s-app-config" (include "application.fullname" .)) "key" $key))) }}
+{{- $_ := set $envMap $key (dict "valueFrom" (dict "configMapKeyRef" (dict "name" (printf "%s-app-config" (include "application.fullname" $)) "key" $key))) }}
 {{- end }}
 
 {{- /* Add all secret variables dynamically */ -}}
 {{- range $key, $value := .Values.appConfig.secret }}
-{{- $_ := set $envMap $key (dict "valueFrom" (dict "secretKeyRef" (dict "name" (printf "%s-app-secret" (include "application.fullname" .)) "key" $key))) }}
+{{- $_ := set $envMap $key (dict "valueFrom" (dict "secretKeyRef" (dict "name" (printf "%s-app-secret" (include "application.fullname" $)) "key" $key))) }}
 {{- end }}
 
 {{- /* Set environment variables on the container */ -}}
