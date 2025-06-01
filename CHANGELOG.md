@@ -1,11 +1,30 @@
 # Changelog
 
-All notable changes to the MariaDB Library Chart will be documented in this file.
+All notable changes to the FPS Ecosystem Helm Charts will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.1.1] - 2025-06-01
+
+### Added
+- **New Chart**: imagepullsecret-library-chart for managing Docker registry image pull secrets
+- Multi-chart repository support with enhanced build infrastructure
+- New scripts: `test-all-charts.sh` and `bump-version-multi.sh` for better multi-chart management
+
+### Changed
+- Updated GitHub Actions workflows to support multiple charts (both mariadb and imagepullsecret charts)
+- Enhanced Makefile with multi-chart targets and convenience commands
+- Improved README with comprehensive chart documentation and usage examples
+- Updated gh-pages index to include both charts
+
+### Infrastructure
+- **ImagePullSecret Chart**: Application chart for creating Docker registry authentication secrets
+- **Multi-Chart Workflows**: Automated testing and releasing for multiple charts
+- **Enhanced Documentation**: Detailed installation examples for both chart types
+- **Build System**: Comprehensive multi-chart support in all build scripts
 
 ## [0.1.0] - 2025-05-30
 

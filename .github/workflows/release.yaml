@@ -62,8 +62,8 @@ jobs:
           fi
         done
 
-        # Upload chart packages to GitHub Releases
-        cr upload --config .github/cr.yaml
+        # Upload chart packages to GitHub Releases (skip if already exists)
+        cr upload --config .github/cr.yaml --skip-existing
 
         # Update Helm repository index and push to gh-pages
         cr index --config .github/cr.yaml --push
