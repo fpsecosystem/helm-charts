@@ -1,10 +1,10 @@
-# Image Pull Secret Library Chart
+# Image Pull Secret Chart
 
-A Helm library chart for managing Docker registry image pull secrets.
+A Helm application chart for managing Docker registry image pull secrets.
 
 ## Description
 
-This library chart provides reusable templates for creating Kubernetes image pull secrets. It's designed to be used as a dependency in other Helm charts to easily manage Docker registry authentication.
+This application chart provides easy management of Kubernetes image pull secrets for Docker registry authentication. It can be deployed directly or used as a subchart dependency.
 
 ## Prerequisites
 
