@@ -5,6 +5,31 @@ entries:
       category: Security
     apiVersion: v2
     appVersion: "1.0"
+    created: "2025-06-01T10:50:08.449870852Z"
+    description: A Helm application chart for managing Docker registry image pull
+      secrets
+    digest: 78270aafb309d774f3634fc1ddb5a4feade762c47f1b19b9952c5b072d671aa5
+    home: https://github.com/fpsecosystem/helm-charts
+    keywords:
+    - imagepullsecret
+    - docker
+    - registry
+    - library
+    - kubernetes
+    maintainers:
+    - email: contact@fpsecosystem.org
+      name: FPS Ecosystem
+    name: imagepullsecret-library-chart
+    sources:
+    - https://github.com/fpsecosystem/helm-charts
+    type: application
+    urls:
+    - https://github.com/fpsecosystem/helm-charts/releases/download/imagepullsecret-library-chart-0.1.3/imagepullsecret-library-chart-0.1.3.tgz
+    version: 0.1.3
+  - annotations:
+      category: Security
+    apiVersion: v2
+    appVersion: "1.0"
     created: "2025-06-01T10:42:05.348802471Z"
     description: A Helm application chart for managing Docker registry image pull
       secrets
@@ -75,4 +100,4 @@ entries:
     urls:
     - mariadb-library-chart-0.1.1.tgz
     version: 0.1.1
-generated: "2025-06-01T10:48:02.299921952Z"
+generated: "2025-06-01T10:50:08.582111423Z"
