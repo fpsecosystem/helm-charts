@@ -6,6 +6,10 @@ on:
     - main
     paths:
     - 'helm-charts/**'
+  pull_request:
+    paths:
+    - 'helm-charts/**'
+  workflow_dispatch:
 
 jobs:
   release:
