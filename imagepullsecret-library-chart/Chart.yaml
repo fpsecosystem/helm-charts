@@ -2,7 +2,7 @@ apiVersion: v2
 name: imagepullsecret-library-chart
 description: A Helm application chart for managing Docker registry image pull secrets
 type: application
-version: 0.1.2
+version: 0.1.3
 appVersion: "1.0"
 home: https://github.com/fpsecosystem/helm-charts
 sources:
