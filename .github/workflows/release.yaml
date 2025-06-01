@@ -5,7 +5,7 @@ on:
     branches:
     - main
     paths:
-    - 'charts/**'
+    - 'helm-charts/**'
 
 jobs:
   release:
@@ -53,8 +53,8 @@ jobs:
         # Create .cr-release-packages directory
         mkdir -p .cr-release-packages
 
-        # Package all charts in charts/
-        for chart in charts/*; do
+        # Package all charts in helm-charts/
+        for chart in helm-charts/*; do
           if [ -d "$chart" ] && [ -f "$chart/Chart.yaml" ]; then
             echo "Packaging $chart..."
             helm package "$chart" --destination .cr-release-packages

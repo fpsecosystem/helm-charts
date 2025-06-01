@@ -3,12 +3,12 @@ name: Lint and Test Charts
 on:
   pull_request:
     paths:
-    - 'charts/**'
+    - 'helm-charts/**'
   push:
     branches:
     - main
     paths:
-    - 'charts/**'
+    - 'helm-charts/**'
 
 jobs:
   lint-test:
