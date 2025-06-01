@@ -1,0 +1,18 @@
+{{- /*
+App ConfigMap for Symfony environment variables
+This ConfigMap stores non-sensitive application configuration
+*/ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "application.fullname" . }}-app-config
+  labels:
+    {{- include "application.labels" . | nindent 4 }}
+  annotations:
+    {{- include "application.annotations" . | nindent 4 }}
+data:
+  {{- with .Values.appConfig.configMap }}
+  {{- range $key, $value := . }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- end }}

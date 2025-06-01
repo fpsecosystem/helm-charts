@@ -1,0 +1,54 @@
+{{/*
+Custom Ingress template that uses release name as subdomain and reads domain from staging-domain secret
+Since Helm can't read secrets at template time, this creates an ingress with a placeholder
+that can be updated by an external controller or post-install hook
+*/}}
+{{- if .Values.ingress.main.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "application.fullname" . }}
+  labels:
+    {{- include "application.labels" . | nindent 4 }}
+  annotations:
+    # Annotation to indicate this ingress needs domain resolution
+    application.io/needs-domain-resolution: "true"
+    application.io/domain-secret: "staging-domain"
+    application.io/domain-secret-key: "domain"
+    application.io/subdomain: {{ .Release.Name | quote }}
+    {{- with .Values.ingress.main.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.ingress.main.className }}
+  ingressClassName: {{ .Values.ingress.main.className }}
+  {{- end }}
+  {{- if .Values.ingress.main.tls }}
+  tls:
+    {{- range .Values.ingress.main.tls }}
+    - hosts:
+        - {{ include "application.dynamicIngressHost" $ }}
+      {{- if .secretName }}
+      secretName: {{ .secretName }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+  rules:
+    - host: {{ include "application.dynamicIngressHost" . }}
+      http:
+        paths:
+          {{- range .Values.ingress.main.hosts }}
+          {{- range .paths }}
+          - path: {{ .path }}
+            {{- if .pathType }}
+            pathType: {{ .pathType }}
+            {{- end }}
+            backend:
+              service:
+                name: {{ include "application.fullname" $ }}
+                port:
+                  name: http
+          {{- end }}
+          {{- end }}
+{{- end }}

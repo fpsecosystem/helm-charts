@@ -1,7 +1,7 @@
 .PHONY: help lint test package clean install-deps
 
-CHARTS := mariadb-library-chart imagepullsecret-library-chart
-CHART_NAME := mariadb-library-chart
+CHARTS := $(shell find helm-charts -maxdepth 1 -mindepth 1 -type d -exec test -f '{}/Chart.yaml' \; -print | xargs -n1 basename)
+CHARTS_DIR := charts
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -19,9 +19,9 @@ install-deps: ## Install development dependencies
 lint: ## Lint all Helm charts
 	@echo "🔍 Linting charts..."
 	@for chart in $(CHARTS); do \
-		if [ -d $$chart ]; then \
+		if [ -d $(CHARTS_DIR)/$$chart ]; then \
 			echo "Linting $$chart..."; \
-			helm lint $$chart; \
+			helm lint $(CHARTS_DIR)/$$chart; \
 		fi; \
 	done
 	@echo "✅ Lint passed"
@@ -30,11 +30,11 @@ test: lint ## Test all Helm chart templates
 	@echo "🧪 Testing chart templates..."
 	@echo "📝 Validating YAML syntax..."
 	@for chart in $(CHARTS); do \
-		if [ -d $$chart ]; then \
+		if [ -d $(CHARTS_DIR)/$$chart]; then \
 			echo "Testing $$chart..."; \
-			find $$chart/templates -name "*.yaml" -exec yamllint -d relaxed {} \; 2>/dev/null || echo "⚠️  yamllint not found, skipping YAML validation for $$chart"; \
+			find $(CHARTS_DIR)/$$chart/templates -name "*.yaml" -exec yamllint -d relaxed {} \; 2>/dev/null || echo "⚠️  yamllint not found, skipping YAML validation for $$chart"; \
 			echo "🔍 Checking template files exist in $$chart..."; \
-			test -f $$chart/templates/_helpers.tpl || (echo "❌ _helpers.tpl missing in $$chart" && exit 1); \
+			test -f $(CHARTS_DIR)/$$chart/templates/_helpers.tpl || (echo "❌ _helpers.tpl missing in $$chart" && exit 1); \
 		fi; \
 	done
 	@echo "✅ Template test passed"
@@ -42,29 +42,29 @@ test: lint ## Test all Helm chart templates
 package: lint ## Package all Helm charts
 	@echo "📦 Packaging charts..."
 	@for chart in $(CHARTS); do \
-		if [ -d $$chart ]; then \
+		if [ -d $(CHARTS_DIR)/$$chart ]; then \
 			echo "Packaging $$chart..."; \
-			helm package $$chart; \
+			helm package $(CHARTS_DIR)/$$chart; \
 		fi; \
 	done
 	@echo "✅ Charts packaged"
 
 clean: ## Clean generated files
 	@echo "🧹 Cleaning up..."
-	@rm -f *-library-chart-*.tgz
+	@rm -f $(CHARTS_DIR)/*-library-chart-*.tgz
 	@echo "✅ Cleanup complete"
 
 ct-lint: ## Run chart-testing lint
 	@echo "🔍 Running chart-testing lint..."
-	@ct lint --target-branch main --chart-dirs .
+	@ct lint --target-branch main --chart-dirs charts
 
 ct-install: ## Run chart-testing install (requires kind cluster)
 	@echo "🧪 Running chart-testing install..."
-	@ct install --target-branch main --chart-dirs .
+	@ct install --target-branch main --chart-dirs charts
 
 release-dry-run: package ## Simulate a release
 	@echo "🚀 Simulating release..."
-	@echo "Would release: $(shell ls $(CHART_NAME)-*.tgz)"
+	@echo "Would release: $(shell ls $(CHARTS_DIR)/$(CHART_NAME)-*.tgz)"
 	@echo "✅ Dry run complete"
 
 bump-major: ## Bump major version

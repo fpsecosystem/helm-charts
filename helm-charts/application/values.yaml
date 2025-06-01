@@ -1,0 +1,93 @@
+# Application Example Values
+# This demonstrates how to use the bjw-s common library chart with
+# mariadb-library-chart to configure a PHP application (Symfony, Laravel, or custom)
+
+# Application configuration
+# These values will be added to ConfigMap and Secret resources
+appConfig:
+  # Non-sensitive environment variables (ConfigMap)
+  configMap:
+    APP_ENV: "prod"
+    # Add any non-sensitive env vars here
+    # MY_CUSTOM_VAR: "value"
+    # MAILER_DSN: "null://null"
+    # Sensitive environment variables (Secret)
+  secret:
+    # APP_SECRET: "change-me-in-production"
+    # Add any sensitive env vars here
+    # ANOTHER_SECRET: "secret-value"
+image:
+  repository: "php:8.2-apache"
+  tag: "latest"
+  pullPolicy: "Always"
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# bjw-s common library configuration
+controllers:
+  main:
+    annotations: {}
+    labels: {}
+    replicas: 1
+
+# Service configuration
+service:
+  main:
+    ports:
+      http:
+        port: 80
+        targetPort: 80
+        protocol: HTTP
+
+# Ingress configuration
+ingress:
+  main:
+    enabled: true
+    className: ""
+    annotations: {}
+    # Dynamic domain configuration
+    # When enabled, the ingress host will be automatically set to {release-name}.{domain}
+    # where domain is read from the staging-domain secret
+    dynamicDomain: "" # Override this to set a static domain instead of reading from secret
+    hosts:
+    - host: "placeholder.example.com" # This will be dynamically updated
+      paths:
+      - path: /
+        pathType: Prefix
+        service:
+          name: main
+          port: http
+    tls: []
+
+# Database connection configuration (example for MariaDB)
+database:
+  # MariaDB reference for operator-based dynamic detection
+  mariaDbRef:
+    name: "mariadb" # Name of MariaDB custom resource
+    namespace: "database" # Uses the same namespace as the release
+
+  # Connection options for DATABASE_URL
+  options:
+    charset: "utf8mb4"
+    # Additional DBAL options
+    driverOptions: {}
+  # Optional: Override automatic detection with custom values
+  # server:
+  #   host: "custom-mariadb.example.com"
+  #   port: 3307
+  # options:
+  #   serverVersion: "10.6.0-MariaDB"
+
+  # Common labels and annotations
+commonLabels:
+  app.kubernetes.io/component: "web-application"
+  app.kubernetes.io/part-of: "php-stack"
+
+commonAnnotations:
+  "helm.sh/resource-policy": "keep"

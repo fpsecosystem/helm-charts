@@ -1,0 +1,25 @@
+{{/*
+Test template to verify ingress rendering
+*/}}
+{{- if .Values.ingress.main.enabled }}
+# CUSTOM INGRESS TEST: Enabled = {{ .Values.ingress.main.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "application.fullname" . }}-test
+  labels:
+    {{- include "application.labels" . | nindent 4 }}
+spec:
+  rules:
+    - host: {{ include "application.dynamicIngressHost" . }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "application.fullname" . }}
+                port:
+                  name: http
+{{- end }}

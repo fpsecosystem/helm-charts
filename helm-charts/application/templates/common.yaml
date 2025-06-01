@@ -1,0 +1,52 @@
+{{/*
+Configure the main container with image and environment variables
+*/}}
+{{- /* Configure the main container */ -}}
+{{- $mainContainer := dict }}
+{{- $_ := set $mainContainer "image" .Values.image }}
+{{- $_ := set $mainContainer "resources" .Values.resources }}
+
+{{- /* Start with a clean env map */ -}}
+{{- $envMap := dict }}
+
+{{- /* Add database environment variables */ -}}
+{{- $_ := set $envMap "DATABASE_URL" (dict "valueFrom" (dict "secretKeyRef" (dict "name" (printf "%s-config" (include "application.fullname" .)) "key" "DATABASE_URL"))) }}
+{{- $_ := set $envMap "DATABASE_PASSWORD" (dict "valueFrom" (dict "secretKeyRef" (dict "name" (include "application.databasePasswordSecretName" .) "key" (include "application.databasePasswordSecretKey" .)))) }}
+
+{{- /* Add all configMap variables dynamically */ -}}
+{{- range $key, $value := .Values.appConfig.configMap }}
+{{- $_ := set $envMap $key (dict "valueFrom" (dict "configMapKeyRef" (dict "name" (printf "%s-app-config" (include "application.fullname" .)) "key" $key))) }}
+{{- end }}
+
+{{- /* Add all secret variables dynamically */ -}}
+{{- range $key, $value := .Values.appConfig.secret }}
+{{- $_ := set $envMap $key (dict "valueFrom" (dict "secretKeyRef" (dict "name" (printf "%s-app-secret" (include "application.fullname" .)) "key" $key))) }}
+{{- end }}
+
+{{- /* Set environment variables on the container */ -}}
+{{- $_ := set $mainContainer "env" $envMap }}
+
+{{- /* Build the main controller spec locally */ -}}
+{{- $controllerMain := dict }}
+{{- $_ := set $controllerMain "annotations" (default dict .Values.controllers.main.annotations) }}
+{{- $_ := set $controllerMain "labels" (default dict .Values.controllers.main.labels) }}
+{{- $_ := set $controllerMain "replicas" (default 1 .Values.controllers.main.replicas) }}
+{{- $_ := set $controllerMain "containers" (dict "main" $mainContainer) }}
+
+{{- /* Build the controllers map */ -}}
+{{- $controllers := dict "main" $controllerMain }}
+
+{{- /* Pass the controllers map to the bjw-s common library */ -}}
+{{- $_ := set . "controllers" $controllers }}
+
+{{/*
+Disable bjw-s ingress generation when our custom ingress is enabled
+*/}}
+{{- if .Values.ingress.main.enabled }}
+{{- $_ := unset .Values "ingress" }}
+{{- end }}
+
+{{/*
+Generate all resources using bjw-s common library
+*/}}
+{{ include "bjw-s.common.loader.all" . }}

@@ -1,0 +1,52 @@
+# MariaDB Operator Version Detection
+# Alternative to init container approach - reads version from MariaDB operator CRDs
+
+# Version detection using MariaDB operator custom resources
+versionDetection:
+  # Enable operator-based version detection instead of init container
+  useOperator: true
+
+  # Fallback to init container if operator method fails
+  fallbackToInitContainer: false
+
+  # MariaDB operator resource configuration
+  operator:
+    # MariaDB custom resource details
+    resource:
+      apiVersion: "k8s.mariadb.com/v1alpha1"
+      kind: "MariaDB"
+      name: "mariadb-primary"
+      namespace: "" # Will use same namespace as release
+
+    # Fields to extract version from
+    versionPath: "status.currentVersion" # or "spec.image" or "spec.version"
+
+    # Alternative paths to try if primary path fails
+    fallbackPaths:
+    - "spec.image"
+    - "spec.version"
+    - "metadata.labels['app.kubernetes.io/version']"
+
+    # Timeout for API calls
+    timeout: "30s"
+
+# Database connection configuration for Symfony
+database:
+  # MariaDB server configuration
+  server:
+    host: "mariadb-primary.default.svc.cluster.local"
+    port: 3306
+
+  # MariaDB reference for library chart integration
+  mariaDbRef:
+    name: "mariadb-primary"
+    namespace: "" # Will use the same namespace as the release
+    # Use the same resource reference for version detection
+    useForVersionDetection: true
+
+  # Connection options for Symfony DATABASE_URL
+  options:
+    charset: "utf8mb4"
+    serverVersion: "10.11.0-MariaDB" # Fallback if operator detection fails
+    # Additional Doctrine DBAL options
+    driverOptions: {}

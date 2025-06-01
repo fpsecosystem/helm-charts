@@ -1,0 +1,40 @@
+# Example values for Laravel application
+# This file demonstrates how to configure the chart for a Laravel application
+
+# Image configuration for Laravel
+image:
+  repository: "your-registry/laravel-app"
+  tag: "v1.0.0"
+  pullPolicy: "IfNotPresent"
+
+# Application configuration
+appConfig:
+  APP_ENV: "production"
+  MAILER_DSN: "smtp://smtp.mailgun.org:587"
+  APP_SECRET: "laravel-production-app-key-here"
+
+  custom:
+    APP_KEY: "base64:your-laravel-app-key-here"
+    APP_URL: "https://myapp.example.com"
+    LOG_CHANNEL: "stack"
+    CACHE_DRIVER: "redis"
+    SESSION_DRIVER: "redis"
+    QUEUE_CONNECTION: "redis"
+
+# Resources for Laravel application
+resources:
+  limits:
+    cpu: 800m
+    memory: 768Mi
+  requests:
+    cpu: 150m
+    memory: 192Mi
+
+# Service configuration for Laravel (typically runs on port 80 or 8080)
+service:
+  main:
+    ports:
+      http:
+        port: 80
+        targetPort: 80
+        protocol: HTTP

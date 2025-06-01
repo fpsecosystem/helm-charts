@@ -1,0 +1,36 @@
+# Example values for Symfony application
+# This file demonstrates how to configure the chart for a Symfony application
+
+# Image configuration for Symfony
+image:
+  repository: "symfony/demo"
+  tag: "latest"
+  pullPolicy: "IfNotPresent"
+
+# Application configuration
+appConfig:
+  APP_ENV: "prod"
+  MAILER_DSN: "smtp://localhost:1025"
+  APP_SECRET: "symfony-production-secret-key-here"
+
+  custom:
+    TRUSTED_PROXIES: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+    TRUSTED_HOSTS: "^localhost|example\\.com$"
+
+# Resources for Symfony application
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+# Service configuration for Symfony (typically runs on port 8000)
+service:
+  main:
+    ports:
+      http:
+        port: 80
+        targetPort: 8000
+        protocol: HTTP

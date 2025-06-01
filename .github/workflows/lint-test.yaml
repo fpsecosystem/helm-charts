@@ -3,14 +3,12 @@ name: Lint and Test Charts
 on:
   pull_request:
     paths:
-    - 'mariadb-library-chart/**'
-    - 'imagepullsecret-library-chart/**'
+    - 'charts/**'
   push:
     branches:
     - main
     paths:
-    - 'mariadb-library-chart/**'
-    - 'imagepullsecret-library-chart/**'
+    - 'charts/**'
 
 jobs:
   lint-test:

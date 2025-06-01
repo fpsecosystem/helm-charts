@@ -1,20 +1,26 @@
 #!/bin/bash
 
 # Test script for all charts
+env | grep CHARTS
 set -e
 
-CHARTS=("mariadb-library-chart" "imagepullsecret-library-chart")
+CHARTS_DIR="helm-charts"
 
-echo "🧪 Testing all charts..."
+# Find all chart directories (skip hidden files and non-directories)
+CHARTS=()
+for dir in "$CHARTS_DIR"/*; do
+  if [ -d "$dir" ] && [ -f "$dir/Chart.yaml" ]; then
+    CHARTS+=("$dir")
+  fi
+
+done
+
+echo "🧪 Testing all charts in $CHARTS_DIR..."
 
 for CHART_DIR in "${CHARTS[@]}"; do
-    if [ ! -d "$CHART_DIR" ]; then
-        echo "⚠️  Chart directory $CHART_DIR not found, skipping..."
-        continue
-    fi
-
+    CHART_NAME=$(basename "$CHART_DIR")
     echo ""
-    echo "📊 Testing $CHART_DIR..."
+    echo "📊 Testing $CHART_NAME..."
 
     echo "🔍 Linting chart..."
     helm lint "$CHART_DIR"
@@ -27,7 +33,7 @@ for CHART_DIR in "${CHARTS[@]}"; do
     CHART_TYPE=$(grep "^type:" "$CHART_DIR/Chart.yaml" | awk '{print $2}' || echo "application")
 
     if [ "$CHART_TYPE" = "library" ]; then
-        echo "📚 Skipping template rendering for library chart $CHART_DIR"
+        echo "📚 Skipping template rendering for library chart $CHART_NAME"
         echo "   Library charts are meant to be used as dependencies"
     else
         if [ -f "$CHART_DIR/values-example.yaml" ]; then
@@ -42,12 +48,12 @@ for CHART_DIR in "${CHARTS[@]}"; do
         fi
     fi
 
-    echo "✅ $CHART_DIR tests passed!"
+    echo "✅ $CHART_NAME tests passed!"
 done
 
 echo ""
 echo "🧹 Cleaning up packages..."
-rm -f *-library-chart-*.tgz
+rm -f $CHARTS_DIR/*-library-chart-*.tgz
 
 echo ""
 echo "🎉 All charts are ready for use!"

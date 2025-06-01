@@ -1,8 +1,11 @@
 ---
 # ct.yaml
+# Chart Testing configuration for FPS Helm Charts
+# Only process charts in the charts/ directory
+
 target-branch: main
 chart-dirs:
-- .
+- charts
 chart-repos:
 - mariadb-operator=https://mariadb-operator.github.io/mariadb-operator
 helm-extra-args: --timeout 600s

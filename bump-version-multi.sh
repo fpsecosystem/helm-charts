@@ -1,9 +1,18 @@
 #!/bin/bash
 
-# Script to bump chart versions for multiple charts
+# Script to bump chart versions for multiple charts in charts/ directory
+echo "[INFO] FPS Ecosystem multi-chart version bump script"
 set -e
 
-CHARTS=("mariadb-library-chart" "imagepullsecret-library-chart")
+CHARTS_DIR="helm-charts"
+
+# Dynamically find all charts in charts/
+CHARTS=()
+for dir in "$CHARTS_DIR"/*; do
+  if [ -d "$dir" ] && [ -f "$dir/Chart.yaml" ]; then
+    CHARTS+=("$(basename "$dir")")
+  fi
+done
 
 function usage() {
     echo "Usage: $0 [chart-name] [major|minor|patch]"
@@ -19,8 +28,8 @@ function usage() {
     echo "  patch: bump patch version (1.0.0 -> 1.0.1)"
     echo ""
     echo "Examples:"
-    echo "  $0 mariadb-library-chart patch"
-    echo "  $0 imagepullsecret-library-chart minor"
+    echo "  $0 application patch"
+    echo "  $0 mariadb-library-chart minor"
     exit 1
 }
 
@@ -65,13 +74,21 @@ if [ $# -ne 2 ]; then
     usage
 fi
 
-CHART_DIR="$1"
+CHART_DIR_NAME="$1"
 BUMP_TYPE="$2"
+CHART_DIR="$CHARTS_DIR/$CHART_DIR_NAME"
 CHART_YAML="$CHART_DIR/Chart.yaml"
 
 # Validate chart name
-if [[ ! " ${CHARTS[@]} " =~ " ${CHART_DIR} " ]]; then
-    echo "Error: Invalid chart name '$CHART_DIR'"
+found=0
+for chart in "${CHARTS[@]}"; do
+    if [[ "$chart" == "$CHART_DIR_NAME" ]]; then
+        found=1
+        break
+    fi
+done
+if [[ $found -eq 0 ]]; then
+    echo "Error: Invalid chart name '$CHART_DIR_NAME'"
     usage
 fi
 
@@ -83,7 +100,7 @@ fi
 
 # Get current version
 CURRENT_VERSION=$(get_current_version "$CHART_YAML")
-echo "Current version of $CHART_DIR: $CURRENT_VERSION"
+echo "Current version of $CHART_DIR_NAME: $CURRENT_VERSION"
 
 # Calculate new version
 NEW_VERSION=$(bump_version "$CURRENT_VERSION" "$BUMP_TYPE")
@@ -109,6 +126,6 @@ echo ""
 echo "Next steps:"
 echo "1. Review the changes: git diff"
 echo "2. Update dependent charts if needed"
-echo "3. Commit the changes: git add . && git commit -m 'chore: bump $CHART_DIR version to $NEW_VERSION'"
-echo "4. Tag the release: git tag -a $CHART_DIR-v$NEW_VERSION -m 'Release $CHART_DIR v$NEW_VERSION'"
+echo "3. Commit the changes: git add . && git commit -m 'chore: bump $CHART_DIR_NAME version to $NEW_VERSION'"
+echo "4. Tag the release: git tag -a $CHART_DIR_NAME-v$NEW_VERSION -m 'Release $CHART_DIR_NAME v$NEW_VERSION'"
 echo "5. Push: git push && git push --tags"

@@ -1,0 +1,123 @@
+{{/*
+Post-install hook job that reads domain from staging-domain secret and updates ingress
+*/}}
+{{- if .Values.ingress.main.enabled }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "application.fullname" . }}-ingress-updater
+  labels:
+    {{- include "application.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": "post-install,post-upgrade"
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": "before-hook-creation,hook-succeeded"
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "application.selectorLabels" . | nindent 8 }}
+        job: ingress-updater
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "application.fullname" . }}-ingress-updater
+      containers:
+      - name: ingress-updater
+        image: bitnami/kubectl:latest
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -e
+          echo "Reading domain from staging-domain secret..."
+
+          # Read domain from secret
+          DOMAIN=$(kubectl get secret staging-domain -o jsonpath='{.data.domain}' | base64 -d)
+          if [ -z "$DOMAIN" ]; then
+            echo "Error: Could not read domain from staging-domain secret"
+            exit 1
+          fi
+
+          echo "Found domain: $DOMAIN"
+
+          # Update ingress with the correct host
+          NEW_HOST="{{ .Release.Name }}.$DOMAIN"
+          echo "Updating ingress {{ include "application.fullname" . }} with host: $NEW_HOST"
+
+          # Patch the ingress
+          kubectl patch ingress {{ include "application.fullname" . }} --type='json' -p="[
+            {
+              \"op\": \"replace\",
+              \"path\": \"/spec/rules/0/host\",
+              \"value\": \"$NEW_HOST\"
+            }
+          ]"
+
+          # Update TLS if configured
+          if kubectl get ingress {{ include "application.fullname" . }} -o jsonpath='{.spec.tls}' | grep -q "hosts"; then
+            echo "Updating TLS hosts..."
+            kubectl patch ingress {{ include "application.fullname" . }} --type='json' -p="[
+              {
+                \"op\": \"replace\",
+                \"path\": \"/spec/tls/0/hosts/0\",
+                \"value\": \"$NEW_HOST\"
+              }
+            ]"
+          fi
+
+          echo "Ingress updated successfully!"
+        env:
+        - name: RELEASE_NAME
+          value: {{ .Release.Name | quote }}
+        - name: INGRESS_NAME
+          value: {{ include "application.fullname" . | quote }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "application.fullname" . }}-ingress-updater
+  labels:
+    {{- include "application.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": "pre-install,pre-upgrade"
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": "before-hook-creation"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "application.fullname" . }}-ingress-updater
+  labels:
+    {{- include "application.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": "pre-install,pre-upgrade"
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": "before-hook-creation"
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses"]
+  verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "application.fullname" . }}-ingress-updater
+  labels:
+    {{- include "application.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": "pre-install,pre-upgrade"
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": "before-hook-creation"
+subjects:
+- kind: ServiceAccount
+  name: {{ include "application.fullname" . }}-ingress-updater
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: {{ include "application.fullname" . }}-ingress-updater
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}

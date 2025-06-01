@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Single chart test script (now adapted for dynamic charts directory)
+# Test script for the application chart (now dynamic for charts dir)
 set -e
 
-CHARTS_DIR="charts"
+CHARTS_DIR="../../charts"
 
 # Find all chart directories (skip hidden files and non-directories)
 CHARTS=()

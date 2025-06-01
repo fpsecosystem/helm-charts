@@ -1,0 +1,56 @@
+# MariaDB Database, User, and Grant resources using the library chart
+# Note: This template demonstrates how to use the mariadb-library-chart
+# but requires the MariaDB Operator to be installed in your cluster.
+#
+# To use this template, uncomment the sections below and ensure
+# the MariaDB Operator is available.
+
+{{/*
+{{- $libValues := index .Values "mariadb-library-chart" -}}
+{{- $context := dict "Values" $libValues "Chart" .Chart "Release" .Release -}}
+
+{{- if $libValues.database.enabled }}
+{{ include "mariadb-library.database" $context }}
+{{- end }}
+
+{{- if $libValues.user.enabled }}
+{{- if $libValues.user.passwordSecret.generate }}
+---
+{{ include "mariadb-library.secret" $context }}
+{{- end }}
+---
+{{ include "mariadb-library.user" $context }}
+{{- end }}
+
+{{- if $libValues.grant.enabled }}
+---
+{{ include "mariadb-library.grant" $context }}
+{{- end }}
+*/}}
+
+# For this example, we demonstrate the DATABASE_URL generation
+# without actually creating the MariaDB resources.
+# In a real deployment, you would:
+# 1. Install the MariaDB Operator
+# 2. Create a MariaDB instance
+# 3. Uncomment the template sections above
+# 4. Deploy this chart to create the database, user, and grants
+
+{{- $libValues := index .Values "mariadb-library-chart" -}}
+{{- if and $libValues.database.enabled $libValues.user.passwordSecret.generate }}
+# Example: Create a password secret for demonstration
+# (In real usage, this would be created by the library chart)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "application.fullname" . }}-password
+  labels:
+    {{- include "application.labels" . | nindent 4 }}
+  annotations:
+    {{- include "application.annotations" . | nindent 4 }}
+    "helm.sh/hook": "pre-install,pre-upgrade"
+    "helm.sh/hook-weight": "-5"
+type: Opaque
+data:
+  password: {{ randAlphaNum 32 | b64enc | quote }}
+{{- end }}

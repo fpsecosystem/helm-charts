@@ -5,8 +5,7 @@ on:
     branches:
     - main
     paths:
-    - 'mariadb-library-chart/**'
-    - 'imagepullsecret-library-chart/**'
+    - 'charts/**'
 
 jobs:
   release:
@@ -28,8 +27,8 @@ jobs:
 
     - name: Check for chart changes and version bump
       run: |
-        # Check if any chart version has been updated
-        if git diff HEAD~1 --name-only | grep -E "(mariadb-library-chart|imagepullsecret-library-chart)/Chart.yaml"; then
+        # Check if any chart version has been updated in charts/
+        if git diff HEAD~1 --name-only | grep -E "charts/.+/Chart.yaml"; then
           echo "Chart.yaml was modified, proceeding with release"
         else
           echo "No changes to Chart.yaml files, skipping release"
@@ -54,9 +53,9 @@ jobs:
         # Create .cr-release-packages directory
         mkdir -p .cr-release-packages
 
-        # Package all charts
-        for chart in mariadb-library-chart imagepullsecret-library-chart; do
-          if [ -d "$chart" ]; then
+        # Package all charts in charts/
+        for chart in charts/*; do
+          if [ -d "$chart" ] && [ -f "$chart/Chart.yaml" ]; then
             echo "Packaging $chart..."
             helm package "$chart" --destination .cr-release-packages
           fi
