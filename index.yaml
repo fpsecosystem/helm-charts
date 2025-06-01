@@ -1,3 +1,48 @@
 apiVersion: v1
-entries: {}
-generated: "2025-05-30T00:00:00Z"
+entries:
+  imagepullsecret-library-chart:
+  - apiVersion: v2
+    appVersion: "1.0"
+    created: "2025-06-01T00:00:00Z"
+    description: A Helm application chart for managing Docker registry image pull secrets
+    digest: ""
+    home: https://github.com/fpsecosystem/helm-charts
+    keywords:
+    - imagepullsecret
+    - docker
+    - registry
+    - kubernetes
+    maintainers:
+    - email: contact@fpsecosystem.org
+      name: FPS Ecosystem
+    name: imagepullsecret-library-chart
+    sources:
+    - https://github.com/fpsecosystem/helm-charts
+    type: application
+    urls:
+    - https://github.com/fpsecosystem/helm-charts/releases/download/imagepullsecret-library-chart-0.1.1/imagepullsecret-library-chart-0.1.1.tgz
+    version: 0.1.1
+  mariadb-library-chart:
+  - apiVersion: v2
+    appVersion: "1.0"
+    created: "2025-06-01T00:00:00Z"
+    description: A Helm library chart for managing MariaDB databases and users using the mariadb-operator
+    digest: ""
+    home: https://github.com/fpsecosystem/helm-charts
+    keywords:
+    - mariadb
+    - database
+    - operator
+    - library
+    - kubernetes
+    maintainers:
+    - email: contact@fpsecosystem.org
+      name: FPS Ecosystem
+    name: mariadb-library-chart
+    sources:
+    - https://github.com/fpsecosystem/helm-charts
+    type: library
+    urls:
+    - https://github.com/fpsecosystem/helm-charts/releases/download/mariadb-library-chart-0.1.1/mariadb-library-chart-0.1.1.tgz
+    version: 0.1.1
+generated: "2025-06-01T00:00:00Z"
