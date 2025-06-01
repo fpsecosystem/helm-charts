@@ -58,6 +58,25 @@ jobs:
         # Create .cr-release-packages directory
         mkdir -p .cr-release-packages
 
+        # Download dependencies if not present
+        for chart in helm-charts/*; do
+          if [ -d "$chart" ] && [ -f "$chart/Chart.yaml" ]; then
+            for dep in $(yq e '.dependencies[].name' "$chart/Chart.yaml"); do
+              dep_version=$(yq e ".dependencies[] | select(.name == \"$dep\") | .version" "$chart/Chart.yaml")
+              dep_file="helm-charts/$dep-$dep_version.tgz"
+              if [ ! -f "$dep_file" ]; then
+                if [ "$dep" = "common" ]; then
+                  helm repo add bjw-s https://bjw-s-labs.github.io/helm-charts
+                  helm pull bjw-s/common --version "$dep_version" --destination helm-charts
+                else
+                  # For other dependencies, try to pull from their repo if available
+                  echo "Dependency $dep not found and not handled automatically. Please add logic if needed."
+                fi
+              fi
+            done
+          fi
+        done
+
         # Package all charts in helm-charts/
         for chart in helm-charts/*; do
           if [ -d "$chart" ] && [ -f "$chart/Chart.yaml" ]; then
