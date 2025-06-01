@@ -74,6 +74,29 @@ if [ $# -ne 2 ]; then
     usage
 fi
 
+if [ "$1" == "--all" ]; then
+    for chart in "${CHARTS[@]}"; do
+        echo "\n--- Bumping $chart ---"
+        CHART_DIR_NAME="$chart"
+        CHART_DIR="$CHARTS_DIR/$CHART_DIR_NAME"
+        CHART_YAML="$CHART_DIR/Chart.yaml"
+        CURRENT_VERSION=$(get_current_version "$CHART_YAML")
+        echo "Current version of $CHART_DIR_NAME: $CURRENT_VERSION"
+        NEW_VERSION=$(bump_version "$CURRENT_VERSION" "$2")
+        echo "New version: $NEW_VERSION"
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s/^version: .*/version: $NEW_VERSION/" "$CHART_YAML"
+        else
+            sed -i "s/^version: .*/version: $NEW_VERSION/" "$CHART_YAML"
+        fi
+        echo "✅ Updated $CHART_YAML with version $NEW_VERSION"
+        echo "🔍 Linting chart..."
+        helm lint "$CHART_DIR"
+    done
+    echo "🎉 All charts bumped!"
+    exit 0
+fi
+
 CHART_DIR_NAME="$1"
 BUMP_TYPE="$2"
 CHART_DIR="$CHARTS_DIR/$CHART_DIR_NAME"
