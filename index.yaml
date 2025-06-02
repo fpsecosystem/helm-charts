@@ -1,6 +1,66 @@
 apiVersion: v1
 entries:
+  application:
+  - annotations:
+      category: Application
+    apiVersion: v2
+    appVersion: 1.0.0
+    created: "2025-06-01T15:39:22.456443154Z"
+    dependencies:
+    - name: common
+      repository: https://bjw-s-labs.github.io/helm-charts
+      version: 4.0.1
+    - name: mariadb-library-chart
+      repository: https://fpsecosystem.github.io/helm-charts
+      version: 0.2.0
+    description: Multi-purpose PHP application chart using mariadb-library-chart
+    digest: f58068e0799afb4338d49e776207e20e4d733b9eaec5706cc0788dfd7577f396
+    home: https://github.com/fpsecosystem/helm-charts
+    keywords:
+    - php
+    - symfony
+    - laravel
+    - application
+    - php
+    - mariadb
+    - database
+    - web-application
+    maintainers:
+    - email: contact@fpsecosystem.org
+      name: FPS Ecosystem
+    name: application
+    sources:
+    - https://github.com/fpsecosystem/helm-charts/tree/main/application
+    type: application
+    urls:
+    - https://github.com/fpsecosystem/helm-charts/releases/download/application-0.3.0/application-0.3.0.tgz
+    version: 0.3.0
   imagepullsecret-library-chart:
+  - annotations:
+      category: Security
+    apiVersion: v2
+    appVersion: "1.0"
+    created: "2025-06-01T15:39:22.565252613Z"
+    description: A Helm application chart for managing Docker registry image pull
+      secrets
+    digest: 56390dae77cc538de993d303626881df8792ae265e5531d47736aba3589f8ba5
+    home: https://github.com/fpsecosystem/helm-charts
+    keywords:
+    - imagepullsecret
+    - docker
+    - registry
+    - library
+    - kubernetes
+    maintainers:
+    - email: contact@fpsecosystem.org
+      name: FPS Ecosystem
+    name: imagepullsecret-library-chart
+    sources:
+    - https://github.com/fpsecosystem/helm-charts
+    type: application
+    urls:
+    - https://github.com/fpsecosystem/helm-charts/releases/download/imagepullsecret-library-chart-0.2.0/imagepullsecret-library-chart-0.2.0.tgz
+    version: 0.2.0
   - annotations:
       category: Security
     apiVersion: v2
@@ -56,6 +116,30 @@ entries:
       category: Database
     apiVersion: v2
     appVersion: "1.0"
+    created: "2025-06-01T15:39:22.698193133Z"
+    description: A Helm library chart for managing MariaDB databases and users using
+      the MariaDB operator
+    digest: 890e212b56d39815fd0197b9be3614e47f783b4ffa53f5501cf670607c8408fa
+    home: https://github.com/fpsecosystem/helm-charts
+    keywords:
+    - mariadb
+    - database
+    - library
+    - operator
+    maintainers:
+    - email: contact@fpsecosystem.org
+      name: FPS Ecosystem
+    name: mariadb-library-chart
+    sources:
+    - https://github.com/fpsecosystem/helm-charts
+    type: library
+    urls:
+    - https://github.com/fpsecosystem/helm-charts/releases/download/mariadb-library-chart-0.2.0/mariadb-library-chart-0.2.0.tgz
+    version: 0.2.0
+  - annotations:
+      category: Database
+    apiVersion: v2
+    appVersion: "1.0"
     created: "2025-06-01T10:48:02.299908296Z"
     description: A Helm library chart for managing MariaDB databases and users using
       the MariaDB operator
@@ -100,4 +184,4 @@ entries:
     urls:
     - mariadb-library-chart-0.1.1.tgz
     version: 0.1.1
-generated: "2025-06-01T10:50:08.582111423Z"
+generated: "2025-06-01T15:39:22.698210316Z"
