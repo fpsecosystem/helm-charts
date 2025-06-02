@@ -18,3 +18,4 @@ keywords:
 - kubernetes
 annotations:
   category: Security
+icon: https://raw.githubusercontent.com/fpsecosystem/helm-charts/main/logo.png

@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Script to bump chart versions for multiple charts in charts/ directory
+# Script to bump chart versions for multiple charts in helm-charts/ directory
 echo "[INFO] FPS Ecosystem multi-chart version bump script"
 set -e
 
 CHARTS_DIR="helm-charts"
 
-# Dynamically find all charts in charts/
+# Dynamically find all charts in helm-charts/
 CHARTS=()
 for dir in "$CHARTS_DIR"/*; do
   if [ -d "$dir" ] && [ -f "$dir/Chart.yaml" ]; then
@@ -76,7 +76,7 @@ fi
 
 if [ "$1" == "--all" ]; then
     for chart in "${CHARTS[@]}"; do
-        echo "\n--- Bumping $chart ---"
+        printf "\n--- Bumping %s ---\n" "$chart"
         CHART_DIR_NAME="$chart"
         CHART_DIR="$CHARTS_DIR/$CHART_DIR_NAME"
         CHART_YAML="$CHART_DIR/Chart.yaml"

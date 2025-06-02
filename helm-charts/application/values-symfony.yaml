@@ -1,36 +1,162 @@
-# Example values for Symfony application
-# This file demonstrates how to configure the chart for a Symfony application
+# Symfony Example Values
+# This example shows how to deploy a Symfony application
+# Use these values with: helm install my-symfony-app ./application -f values-symfony.yaml
 
-# Image configuration for Symfony
-image:
-  repository: "symfony/demo"
-  tag: "latest"
-  pullPolicy: "IfNotPresent"
-
-# Application configuration
+# Application configuration for Symfony
 appConfig:
-  APP_ENV: "prod"
-  MAILER_DSN: "smtp://localhost:1025"
-  APP_SECRET: "symfony-production-secret-key-here"
+  configMap:
+    APP_ENV: "prod"
+    APP_DEBUG: "false"
+    APP_SECRET: "your-32-character-secret-here"
+    DATABASE_URL: "mysql://user:password@mariadb:3306/symfony_db?serverVersion=10.11.0-MariaDB&charset=utf8mb4"
+    MAILER_DSN: "smtp://localhost:587"
+    MESSENGER_TRANSPORT_DSN: "doctrine://default"
+    TRUSTED_PROXIES: "127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+    TRUSTED_HOSTS: "localhost,symfony.example.com"
 
-  custom:
-    TRUSTED_PROXIES: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
-    TRUSTED_HOSTS: "^localhost|example\\.com$"
+controllers:
+  main:
+    replicas: 2
+    containers:
+      main:
+        image:
+          repository: "your-registry/symfony-app"
+          tag: "latest"
+          pullPolicy: "Always"
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 200m
+            memory: 256Mi
+        # Health checks for Symfony
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 80
+              initialDelaySeconds: 30
+              periodSeconds: 10
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /ready
+                port: 80
+              initialDelaySeconds: 5
+              periodSeconds: 5
 
-# Resources for Symfony application
-resources:
-  limits:
-    cpu: 1000m
-    memory: 1Gi
-  requests:
-    cpu: 200m
-    memory: 256Mi
-
-# Service configuration for Symfony (typically runs on port 8000)
+# Service configuration
 service:
   main:
     ports:
       http:
         port: 80
-        targetPort: 8000
+        targetPort: 80
         protocol: HTTP
+
+# Ingress configuration for Symfony
+ingress:
+  main:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    hosts:
+    - host: "symfony.example.com"
+      paths:
+      - path: /
+        pathType: Prefix
+        service:
+          name: main
+          port: http
+    tls:
+    - secretName: symfony-tls
+      hosts:
+      - symfony.example.com
+
+# Database connection for Symfony
+database:
+  mariaDbRef:
+    name: "symfony-mariadb"
+    namespace: "database"
+  options:
+    charset: "utf8mb4"
+    serverVersion: "10.11.0-MariaDB"
+
+# Symfony-specific persistence configuration
+persistence:
+  # Symfony var directory (cache, logs, sessions)
+  app-data:
+    enabled: true
+    type: persistentVolumeClaim
+    size: 5Gi
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    retain: true
+    globalMounts:
+    - path: /var/www/html/var
+      readOnly: false
+
+  # Public uploads directory
+  uploads:
+    enabled: true
+    type: persistentVolumeClaim
+    size: 10Gi
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    retain: true
+    globalMounts:
+    - path: /var/www/html/public/uploads
+      readOnly: false
+
+  # Shared storage for multi-replica setups
+  shared:
+    enabled: true
+    type: persistentVolumeClaim
+    size: 4Gi
+    storageClass: ""
+    accessMode: ReadWriteMany
+    retain: true
+    globalMounts:
+    - path: /var/www/html/public/media
+      readOnly: false
+
+  # Cache storage for performance
+  cache:
+    enabled: true
+    type: emptyDir
+    medium: Memory
+    sizeLimit: 512Mi
+    globalMounts:
+    - path: /tmp/symfony-cache
+      readOnly: false
+
+  # Session storage
+  sessions:
+    enabled: false # Symfony typically uses database sessions
+    type: persistentVolumeClaim
+    size: 1Gi
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    retain: false
+    globalMounts:
+    - path: /var/www/html/var/sessions
+      readOnly: false
+
+# Common labels for Symfony
+commonLabels:
+  app.kubernetes.io/component: "symfony-application"
+  app.kubernetes.io/part-of: "symfony-stack"
+  framework: "symfony"
+
+commonAnnotations:
+  "helm.sh/resource-policy": "keep"
+  "app.kubernetes.io/framework": "symfony"

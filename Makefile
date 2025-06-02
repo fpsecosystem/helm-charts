@@ -1,7 +1,7 @@
 .PHONY: help lint test package clean install-deps
 
 CHARTS := $(shell find helm-charts -maxdepth 1 -mindepth 1 -type d -exec test -f '{}/Chart.yaml' \; -print | xargs -n1 basename)
-CHARTS_DIR := charts
+CHARTS_DIR := helm-charts
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -30,7 +30,7 @@ test: lint ## Test all Helm chart templates
 	@echo "🧪 Testing chart templates..."
 	@echo "📝 Validating YAML syntax..."
 	@for chart in $(CHARTS); do \
-		if [ -d $(CHARTS_DIR)/$$chart]; then \
+		if [ -d $(CHARTS_DIR)/$$chart ]; then \
 			echo "Testing $$chart..."; \
 			find $(CHARTS_DIR)/$$chart/templates -name "*.yaml" -exec yamllint -d relaxed {} \; 2>/dev/null || echo "⚠️  yamllint not found, skipping YAML validation for $$chart"; \
 			echo "🔍 Checking template files exist in $$chart..."; \
@@ -56,11 +56,11 @@ clean: ## Clean generated files
 
 ct-lint: ## Run chart-testing lint
 	@echo "🔍 Running chart-testing lint..."
-	@ct lint --target-branch main --chart-dirs charts
+	@ct lint --target-branch main --chart-dirs $(CHARTS_DIR)
 
 ct-install: ## Run chart-testing install (requires kind cluster)
 	@echo "🧪 Running chart-testing install..."
-	@ct install --target-branch main --chart-dirs charts
+	@ct install --target-branch main --chart-dirs $(CHARTS_DIR)
 
 release-dry-run: package ## Simulate a release
 	@echo "🚀 Simulating release..."
@@ -68,13 +68,13 @@ release-dry-run: package ## Simulate a release
 	@echo "✅ Dry run complete"
 
 bump-major: ## Bump major version
-	@./bump-version.sh major
+	@./bump-version-multi.sh $(CHART) major
 
 bump-minor: ## Bump minor version
-	@./bump-version.sh minor
+	@./bump-version-multi.sh $(CHART) minor
 
 bump-patch: ## Bump patch version
-	@./bump-version.sh patch
+	@./bump-version-multi.sh $(CHART) patch
 
 setup-dev: ## Setup development environment
 	@echo "🔧 Setting up development environment..."

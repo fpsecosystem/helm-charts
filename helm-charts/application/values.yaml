@@ -1,9 +1,9 @@
 # Application Example Values
-# This demonstrates how to use the bjw-s common library chart with
-# mariadb-library-chart to configure a PHP application (Symfony, Laravel, or custom)
+# Universal chart for WordPress, Laravel, Symfony and other PHP applications
+# Just provide your application image and this chart handles the rest
 
 # Application configuration
-# These values will be added to ConfigMap and Secret resources
+# These values will be added to ConfigMap resources
 appConfig:
   # Non-sensitive environment variables (ConfigMap)
   configMap:
@@ -11,13 +11,6 @@ appConfig:
     # Add any non-sensitive env vars here
     # MY_CUSTOM_VAR: "value"
     # MAILER_DSN: "null://null"
-    # Sensitive environment variables (Secret)
-  secret:
-    # APP_SECRET: "change-me-in-production"
-    # Add any sensitive env vars here
-    # ANOTHER_SECRET: "secret-value"
-
-    # bjw-s common library configuration
 controllers:
   main:
     annotations: {}
@@ -85,7 +78,59 @@ database:
   # options:
   #   serverVersion: "10.6.0-MariaDB"
 
-  # Common labels and annotations
+  # Persistence configuration
+persistence:
+  # App data persistence (for user uploads, cache, logs, etc.)
+  app-data:
+    enabled: true
+    type: persistentVolumeClaim
+    size: 8Gi
+    storageClass: "" # Use default storage class
+    accessMode: ReadWriteOnce
+    retain: true
+    globalMounts:
+    - path: /var/www/html/storage
+      readOnly: false
+    # Framework-specific mount points:
+    # WordPress: /var/www/html/wp-content/uploads
+    # Symfony: /var/www/html/var
+    # Laravel: /var/www/html/storage
+
+    # Shared storage for multi-replica setups
+  shared:
+    enabled: false
+    type: persistentVolumeClaim
+    size: 4Gi
+    storageClass: "" # Use default storage class
+    accessMode: ReadWriteMany # Required for multi-replica
+    retain: true
+    globalMounts:
+    - path: /var/www/html/public/uploads
+      readOnly: false
+
+  # Cache storage (optional, for performance)
+  cache:
+    enabled: false
+    type: emptyDir
+    medium: Memory
+    sizeLimit: 1Gi
+    globalMounts:
+    - path: /tmp/cache
+      readOnly: false
+
+  # Session storage (for sticky sessions or shared sessions)
+  sessions:
+    enabled: false
+    type: persistentVolumeClaim
+    size: 1Gi
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    retain: false
+    globalMounts:
+    - path: /var/www/html/var/sessions
+      readOnly: false
+
+# Common labels and annotations
 commonLabels:
   app.kubernetes.io/component: "web-application"
   app.kubernetes.io/part-of: "php-stack"

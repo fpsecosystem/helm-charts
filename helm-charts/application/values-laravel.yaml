@@ -1,36 +1,82 @@
-# Example values for Laravel application
-# This file demonstrates how to configure the chart for a Laravel application
+# Laravel Example Values
+# This example shows how to deploy a Laravel application
+# Use these values with: helm install my-laravel-app ./application -f values-laravel.yaml
 
-# Image configuration for Laravel
-image:
-  repository: "your-registry/laravel-app"
-  tag: "v1.0.0"
-  pullPolicy: "IfNotPresent"
-
-# Application configuration
+# Application configuration for Laravel
 appConfig:
-  APP_ENV: "production"
-  MAILER_DSN: "smtp://smtp.mailgun.org:587"
-  APP_SECRET: "laravel-production-app-key-here"
+  configMap:
+    APP_NAME: "Laravel"
+    APP_ENV: "production"
+    APP_DEBUG: "false"
+    APP_URL: "https://laravel.example.com"
+    APP_KEY: "base64:your-32-character-base64-encoded-key-here"
+    APP_TIMEZONE: "UTC"
 
-  custom:
-    APP_KEY: "base64:your-laravel-app-key-here"
-    APP_URL: "https://myapp.example.com"
     LOG_CHANNEL: "stack"
-    CACHE_DRIVER: "redis"
-    SESSION_DRIVER: "redis"
-    QUEUE_CONNECTION: "redis"
+    LOG_DEPRECATIONS_CHANNEL: "null"
+    LOG_LEVEL: "error"
 
-# Resources for Laravel application
-resources:
-  limits:
-    cpu: 800m
-    memory: 768Mi
-  requests:
-    cpu: 150m
-    memory: 192Mi
+    DB_CONNECTION: "mysql"
+    DB_HOST: "mariadb"
+    DB_PORT: "3306"
+    DB_DATABASE: "laravel_db"
+    DB_USERNAME: "laravel_user"
+    DB_PASSWORD: "secure_password"
 
-# Service configuration for Laravel (typically runs on port 80 or 8080)
+    BROADCAST_DRIVER: "log"
+    CACHE_DRIVER: "file"
+    FILESYSTEM_DISK: "local"
+    QUEUE_CONNECTION: "sync"
+    SESSION_DRIVER: "file"
+    SESSION_LIFETIME: "120"
+
+    MAIL_MAILER: "smtp"
+    MAIL_HOST: "smtp.mailgun.org"
+    MAIL_PORT: "587"
+    MAIL_USERNAME: "null"
+    MAIL_PASSWORD: "null"
+    MAIL_ENCRYPTION: "null"
+    MAIL_FROM_ADDRESS: "hello@example.com"
+    MAIL_FROM_NAME: "${APP_NAME}"
+
+controllers:
+  main:
+    replicas: 2
+    containers:
+      main:
+        image:
+          repository: "your-registry/laravel-app"
+          tag: "latest"
+          pullPolicy: "Always"
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 200m
+            memory: 256Mi
+        # Health checks for Laravel
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 80
+              initialDelaySeconds: 30
+              periodSeconds: 10
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /up
+                port: 80
+              initialDelaySeconds: 5
+              periodSeconds: 5
+
+# Service configuration
 service:
   main:
     ports:
@@ -38,3 +84,107 @@ service:
         port: 80
         targetPort: 80
         protocol: HTTP
+
+# Ingress configuration for Laravel
+ingress:
+  main:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    hosts:
+    - host: "laravel.example.com"
+      paths:
+      - path: /
+        pathType: Prefix
+        service:
+          name: main
+          port: http
+    tls:
+    - secretName: laravel-tls
+      hosts:
+      - laravel.example.com
+
+# Database connection for Laravel
+database:
+  mariaDbRef:
+    name: "laravel-mariadb"
+    namespace: "database"
+  options:
+    charset: "utf8mb4"
+    collation: "utf8mb4_unicode_ci"
+    serverVersion: "10.11.0-MariaDB"
+
+# Laravel-specific persistence configuration
+persistence:
+  # Laravel storage directory (logs, framework cache, sessions, app files)
+  app-data:
+    enabled: true
+    type: persistentVolumeClaim
+    size: 8Gi
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    retain: true
+    globalMounts:
+    - path: /var/www/html/storage
+      readOnly: false
+
+  # Public uploads directory
+  uploads:
+    enabled: true
+    type: persistentVolumeClaim
+    size: 20Gi
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    retain: true
+    globalMounts:
+    - path: /var/www/html/public/uploads
+      readOnly: false
+
+  # Shared storage for multi-replica setups
+  shared:
+    enabled: true
+    type: persistentVolumeClaim
+    size: 10Gi
+    storageClass: ""
+    accessMode: ReadWriteMany
+    retain: true
+    globalMounts:
+    - path: /var/www/html/public/storage
+      readOnly: false
+
+  # Cache storage for performance
+  cache:
+    enabled: true
+    type: emptyDir
+    medium: Memory
+    sizeLimit: 1Gi
+    globalMounts:
+    - path: /tmp/laravel-cache
+      readOnly: false
+
+  # Session storage (if using file sessions)
+  sessions:
+    enabled: true
+    type: persistentVolumeClaim
+    size: 2Gi
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    retain: false
+    globalMounts:
+    - path: /var/www/html/storage/framework/sessions
+      readOnly: false
+
+# Common labels for Laravel
+commonLabels:
+  app.kubernetes.io/component: "laravel-application"
+  app.kubernetes.io/part-of: "laravel-stack"
+  framework: "laravel"
+
+commonAnnotations:
+  "helm.sh/resource-policy": "keep"
+  "app.kubernetes.io/framework": "laravel"

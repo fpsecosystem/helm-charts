@@ -5,6 +5,8 @@ type: application
 version: 0.3.0
 appVersion: "1.0.0"
 
+icon: https://raw.githubusercontent.com/fpsecosystem/helm-charts/main/logo.png
+
 dependencies:
 - name: common
   version: "4.0.1"

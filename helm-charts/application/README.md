@@ -1,275 +1,303 @@
-# Application Chart
+# Universal PHP Application Helm Chart
 
-A multi-purpose PHP application Helm chart supporting Symfony, Laravel, and custom PHP applications using the bjw-s common library and mariadb-library-chart.
+A universal Helm chart for deploying PHP applications including WordPress, Laravel, Symfony, and other PHP frameworks. This chart provides a flexible foundation that can be customized for any PHP application by simply providing your application image and configuration.
 
-## Description
+## Features
 
-This application chart provides a flexible deployment solution for PHP applications with the following features:
+- **Universal Support**: Works with WordPress, Laravel, Symfony, and any PHP application
+- **Flexible Persistence**: Multiple storage options with bjw-s common library patterns
+- **Database Integration**: Built-in MariaDB operator support with automatic connection
+- **Dynamic Configuration**: ConfigMap-based environment variable management
+- **High Availability**: Multi-replica support with shared storage options
+- **Security**: Separate handling of sensitive and non-sensitive configuration
+- **Modern Patterns**: Uses bjw-s common library for Kubernetes best practices
 
-- **Multi-Purpose Configuration**: Supports Symfony, Laravel, and custom PHP applications
-- **Dynamic Environment Variables**: ConfigMap and Secret management for any environment variables
-- **Database Integration**: Built-in MariaDB support using the mariadb-library-chart
-- **Flexible Image Configuration**: Support for different container images and configurations
-- **Modern Kubernetes Resources**: Uses bjw-s common library for standardized resource management
+## Quick Start
 
-## Prerequisites
-
-- Kubernetes 1.19+
-- Helm 3.2.0+
-- [MariaDB Operator](https://github.com/mariadb-operator/mariadb-operator) installed in your cluster (if using database features)
-- A MariaDB instance managed by the MariaDB Operator (if using database features)
-
-## Installation
-
-### Method 1: From Helm Repository
+### Deploy a WordPress Site
 
 ```bash
-helm repo add fps-charts https://fpsecosystem.github.io/helm-charts
-helm repo update
-helm install my-app fps-charts/application
+helm install my-wordpress ./application -f values-wordpress.yaml \
+  --set appConfig.configMap.WORDPRESS_DB_PASSWORD="secure_password" \
+  --set controllers.main.containers.main.image.repository="wordpress" \
+  --set controllers.main.containers.main.image.tag="6.4-apache"
 ```
 
-### Method 2: From Source
+### Deploy a Laravel Application
 
 ```bash
-git clone https://github.com/fpsecosystem/helm-charts.git
-cd helm-charts/examples/application
-helm dependency update
-helm install my-app .
+helm install my-laravel ./application -f values-laravel.yaml \
+  --set appConfig.configMap.APP_KEY="base64:your-laravel-key" \
+  --set controllers.main.containers.main.image.repository="your-registry/laravel-app" \
+  --set controllers.main.containers.main.image.tag="latest"
+```
+
+### Deploy a Symfony Application
+
+```bash
+helm install my-symfony ./application -f values-symfony.yaml \
+  --set appConfig.configMap.APP_SECRET="your-symfony-secret" \
+  --set controllers.main.containers.main.image.repository="your-registry/symfony-app" \
+  --set controllers.main.containers.main.image.tag="latest"
 ```
 
 ## Configuration
 
-### Application Configuration
+### Application Configuration (`appConfig`)
 
-The chart supports dynamic environment variables through two main sections:
-
-- `appConfig.configMap`: Non-sensitive environment variables
-- `appConfig.secret`: Sensitive environment variables (passwords, keys, etc.)
-
-### Example Configurations
-
-#### Symfony Application
+All application environment variables are managed through the `appConfig.configMap` section:
 
 ```yaml
-# Use values-symfony.yaml or configure manually:
-image:
-  repository: "symfony/demo"
-  tag: "latest"
-  pullPolicy: "Always"
-
-appConfig:
-  configMap:
-    APP_ENV: "prod"
-    MAILER_DSN: "null://null"
-  secret:
-    APP_SECRET: "change-me-in-production"
-
-# Enable database
-mariadb-library-chart:
-  database:
-    enabled: true
-    name: "symfony-app"
-  user:
-    enabled: true
-    passwordSecret:
-      generate: true
-  grant:
-    enabled: true
-```
-
-#### Laravel Application
-
-```yaml
-# Use values-laravel.yaml or configure manually:
-image:
-  repository: "laravel/laravel"
-  tag: "latest"
-  pullPolicy: "Always"
-
 appConfig:
   configMap:
     APP_ENV: "production"
-    LOG_CHANNEL: "stack"
-    CACHE_DRIVER: "redis"
-    SESSION_DRIVER: "redis"
-    QUEUE_CONNECTION: "redis"
-  secret:
-    APP_KEY: "base64:your-app-key-here"
-    DB_PASSWORD: "secure-database-password"
-
-# Database configuration
-mariadb-library-chart:
-  database:
-    enabled: true
-    name: "laravel-app"
-  user:
-    enabled: true
-    passwordSecret:
-      generate: true
-  grant:
-    enabled: true
+    DATABASE_URL: "mysql://user:pass@host:3306/db"
+    # Add any environment variables your application needs
 ```
 
-#### Custom PHP Application
+**Note**: Sensitive values should be provided via Helm values or external secrets, not hardcoded in values files.
+
+### Persistence Configuration
+
+The chart supports multiple persistence patterns using bjw-s common library:
+
+#### Basic App Data Storage
+```yaml
+persistence:
+  app-data:
+    enabled: true
+    type: persistentVolumeClaim
+    size: 8Gi
+    globalMounts:
+      - path: /var/www/html/storage  # Laravel
+      # - path: /var/www/html/var    # Symfony
+      # - path: /var/www/html/wp-content  # WordPress
+```
+
+#### Multi-Replica Shared Storage
+```yaml
+persistence:
+  shared:
+    enabled: true
+    type: persistentVolumeClaim
+    size: 10Gi
+    accessMode: ReadWriteMany  # Required for sharing between pods
+    globalMounts:
+      - path: /var/www/html/public/uploads
+```
+
+#### Performance Cache Storage
+```yaml
+persistence:
+  cache:
+    enabled: true
+    type: emptyDir
+    medium: Memory
+    sizeLimit: 1Gi
+    globalMounts:
+      - path: /tmp/cache
+```
+
+### Database Integration
+
+The chart includes built-in MariaDB operator integration:
 
 ```yaml
-# Use values-custom-php.yaml or configure manually:
-image:
-  repository: "my-registry/my-php-app"
-  tag: "v1.0.0"
-  pullPolicy: "IfNotPresent"
-
-appConfig:
-  configMap:
-    PHP_ENV: "production"
-    LOG_LEVEL: "info"
-    CACHE_ENABLED: "true"
-  secret:
-    API_SECRET: "your-api-secret"
-    DB_PASSWORD: "database-password"
-
-# Minimal database setup
-mariadb-library-chart:
-  database:
-    enabled: true
-  user:
-    enabled: true
-    passwordSecret:
-      generate: true
-  grant:
-    enabled: true
+database:
+  mariaDbRef:
+    name: "my-mariadb"      # Name of MariaDB custom resource
+    namespace: "database"   # Namespace where MariaDB is deployed
+  options:
+    charset: "utf8mb4"
+    serverVersion: "10.11.0-MariaDB"
 ```
 
-### Configuration Parameters
+The chart automatically:
+- Detects the MariaDB service and credentials
+- Generates appropriate `DATABASE_URL` environment variable
+- Configures connection parameters
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `image.repository` | Container image repository | `"symfony/demo"` |
-| `image.tag` | Container image tag | `"latest"` |
-| `image.pullPolicy` | Image pull policy | `"Always"` |
-| `appConfig.configMap` | Non-sensitive environment variables | `{}` |
-| `appConfig.secret` | Sensitive environment variables | `{}` |
-| `mariadb-library-chart.*` | MariaDB configuration (see mariadb-library-chart docs) | See values.yaml |
-
-### Environment Variables
-
-Environment variables are automatically injected from both ConfigMap and Secret:
-
-- **ConfigMap variables**: Available as environment variables in the container
-- **Secret variables**: Available as environment variables in the container (secured)
-
-You can add any environment variable to these sections and they will be automatically available in your container.
-
-## Example Value Files
-
-The chart includes several example configurations:
-
-- `values-symfony.yaml`: Symfony application configuration
-- `values-laravel.yaml`: Laravel application configuration
-- `values-custom-php.yaml`: Custom PHP application configuration
-
-## Templates
-
-This chart provides the following Kubernetes resources:
-
-- **ConfigMap**: Non-sensitive application configuration
-- **Secret**: Sensitive application configuration
-- **Common Resources**: Via bjw-s common library (Deployment, Service, Ingress, etc.)
-- **MariaDB Resources**: Database, user, and grants (when enabled)
-
-## Usage Examples
-
-### Quick Start with Symfony
-
-```bash
-helm install my-symfony-app . -f values-symfony.yaml
-```
-
-### Quick Start with Laravel
-
-```bash
-helm install my-laravel-app . -f values-laravel.yaml
-```
-
-### Custom Configuration
-
-```bash
-# Create your own values file
-cat > my-values.yaml << EOF
-image:
-  repository: "my-app"
-  tag: "v1.0.0"
-
-appConfig:
-  configMap:
-    CUSTOM_VAR: "value"
-  secret:
-    SECRET_KEY: "secret-value"
-EOF
-
-helm install my-app . -f my-values.yaml
-```
-
-### Adding Environment Variables
-
-Simply add any environment variable to the appropriate section:
+### Ingress Configuration
 
 ```yaml
-appConfig:
-  configMap:
-    # Add any non-sensitive variables here
-    NEW_CONFIG_VAR: "some-value"
-    ANOTHER_VAR: "another-value"
-  secret:
-    # Add any sensitive variables here
-    SECRET_KEY: "secret-value"
-    API_TOKEN: "secret-token"
+ingress:
+  main:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    hosts:
+    - host: "myapp.example.com"
+      paths:
+      - path: /
+        pathType: Prefix
+        service:
+          name: main
+          port: http
+    tls:
+    - secretName: myapp-tls
+      hosts:
+      - myapp.example.com
 ```
 
-## Database Integration
+## Framework-Specific Examples
 
-The chart includes the mariadb-library-chart as a dependency for database management:
+### WordPress
+
+WordPress requires specific environment variables and persistence configuration:
 
 ```yaml
-mariadb-library-chart:
-  database:
-    enabled: true
-    name: "my-app-db"
-    mariaDbRef:
-      name: "mariadb-instance"
-      namespace: "mariadb-system"
+# values-wordpress.yaml
+appConfig:
+  configMap:
+    WORDPRESS_DB_HOST: "mariadb"
+    WORDPRESS_DB_NAME: "wordpress_db"
+    WORDPRESS_DB_USER: "wordpress_user"
+    WORDPRESS_TABLE_PREFIX: "wp_"
 
-  user:
-    enabled: true
-    name: "my-app-user"
-    passwordSecret:
-      generate: true
-      passwordLength: 24
+controllers:
+  main:
+    containers:
+      main:
+        image:
+          repository: "wordpress"
+          tag: "6.4-apache"
 
-  grant:
+persistence:
+  app-data:
     enabled: true
-    privileges:
-      - "SELECT"
-      - "INSERT"
-      - "UPDATE"
-      - "DELETE"
+    size: 20Gi
+    globalMounts:
+      - path: /var/www/html/wp-content
+  uploads:
+    enabled: true
+    size: 50Gi
+    globalMounts:
+      - path: /var/www/html/wp-content/uploads
+```
+
+### Laravel
+
+Laravel applications need specific environment variables and storage paths:
+
+```yaml
+# values-laravel.yaml
+appConfig:
+  configMap:
+    APP_ENV: "production"
+    APP_KEY: "base64:your-laravel-key"
+    DB_CONNECTION: "mysql"
+    CACHE_DRIVER: "file"
+    SESSION_DRIVER: "file"
+
+controllers:
+  main:
+    containers:
+      main:
+        image:
+          repository: "your-registry/laravel-app"
+          tag: "latest"
+
+persistence:
+  app-data:
+    enabled: true
+    size: 8Gi
+    globalMounts:
+      - path: /var/www/html/storage
+  uploads:
+    enabled: true
+    size: 20Gi
+    globalMounts:
+      - path: /var/www/html/public/uploads
+```
+
+### Symfony
+
+Symfony applications use different configuration patterns:
+
+```yaml
+# values-symfony.yaml
+appConfig:
+  configMap:
+    APP_ENV: "prod"
+    APP_SECRET: "your-symfony-secret"
+    DATABASE_URL: "mysql://user:pass@mariadb:3306/symfony_db"
+    TRUSTED_PROXIES: "127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+
+controllers:
+  main:
+    containers:
+      main:
+        image:
+          repository: "your-registry/symfony-app"
+          tag: "latest"
+
+persistence:
+  app-data:
+    enabled: true
+    size: 5Gi
+    globalMounts:
+      - path: /var/www/html/var
+  uploads:
+    enabled: true
+    size: 10Gi
+    globalMounts:
+      - path: /var/www/html/public/uploads
 ```
 
 ## Advanced Configuration
 
-### Custom Labels and Annotations
+### Multi-Replica Deployments
+
+For high availability, configure multiple replicas with shared storage:
 
 ```yaml
-commonLabels:
-  app.kubernetes.io/part-of: "my-application-suite"
-  environment: "production"
+controllers:
+  main:
+    replicas: 3
 
-commonAnnotations:
-  monitoring.coreos.com/enabled: "true"
+persistence:
+  shared:
+    enabled: true
+    accessMode: ReadWriteMany  # Required for multi-replica
+    globalMounts:
+      - path: /var/www/html/public/uploads
 ```
 
-### Resource Limits
+### Health Checks
+
+Configure appropriate health checks for your application:
+
+```yaml
+controllers:
+  main:
+    containers:
+      main:
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 80
+              initialDelaySeconds: 30
+              periodSeconds: 10
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /ready
+                port: 80
+              initialDelaySeconds: 5
+              periodSeconds: 5
+```
+
+### Resource Management
+
+Set appropriate resource limits and requests:
 
 ```yaml
 controllers:
@@ -277,34 +305,64 @@ controllers:
     containers:
       main:
         resources:
-          requests:
-            cpu: "100m"
-            memory: "128Mi"
           limits:
-            cpu: "500m"
-            memory: "512Mi"
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 200m
+            memory: 256Mi
 ```
 
-## Testing
+## Security Considerations
 
-Test the chart with dry-run:
+1. **Secrets Management**: Use external secret management for sensitive values
+2. **Network Policies**: Consider implementing network policies for isolation
+3. **Pod Security**: Configure appropriate security contexts
+4. **Image Security**: Use specific image tags and vulnerability scanning
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Database Connection**: Verify MariaDB operator and connection details
+2. **Persistence**: Check storage class availability and permissions
+3. **Ingress**: Verify ingress controller and DNS configuration
+4. **Resources**: Monitor resource usage and adjust limits
+
+### Debugging Commands
 
 ```bash
-helm install my-app . --dry-run --debug
+# Check pod status
+kubectl get pods -l app.kubernetes.io/instance=my-app
+
+# View pod logs
+kubectl logs -l app.kubernetes.io/instance=my-app -f
+
+# Check persistent volumes
+kubectl get pv,pvc
+
+# Describe deployment
+kubectl describe deployment my-app
 ```
+
+## Dependencies
+
+This chart depends on:
+- [bjw-s common library](https://bjw-s.github.io/helm-charts/) (v4.0.1+)
+- [MariaDB Library Chart](../mariadb-library-chart/) (for database integration)
+
+## Values Reference
+
+See the individual values files for complete configuration options:
+- [`values.yaml`](./values.yaml) - Default values with all options
+- [`values-wordpress.yaml`](./values-wordpress.yaml) - WordPress-specific configuration
+- [`values-laravel.yaml`](./values-laravel.yaml) - Laravel-specific configuration
+- [`values-symfony.yaml`](./values-symfony.yaml) - Symfony-specific configuration
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test your changes
-5. Submit a pull request
-
-## License
-
-This chart is licensed under the MIT License.
-
-## Support
-
-For support and questions, please open an issue in the [GitHub repository](https://github.com/fpsecosystem/helm-charts).
+When contributing to this chart:
+1. Test with all supported frameworks
+2. Update documentation for new features
+3. Follow bjw-s common library patterns
+4. Maintain backward compatibility

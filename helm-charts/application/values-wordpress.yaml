@@ -1,0 +1,211 @@
+# WordPress Example Values
+# This example shows how to deploy a WordPress application
+# Use these values with: helm install my-wordpress ./application -f values-wordpress.yaml
+
+# Application configuration for WordPress
+appConfig:
+  configMap:
+    WORDPRESS_DB_HOST: "mariadb"
+    WORDPRESS_DB_NAME: "wordpress_db"
+    WORDPRESS_DB_USER: "wordpress_user"
+    WORDPRESS_DB_PASSWORD: "secure_password"
+    WORDPRESS_TABLE_PREFIX: "wp_"
+
+    # WordPress configuration
+    WORDPRESS_DEBUG: "false"
+    WORDPRESS_CONFIG_EXTRA: |
+      define('WP_MEMORY_LIMIT', '256M');
+      define('WP_MAX_MEMORY_LIMIT', '512M');
+      define('AUTOMATIC_UPDATER_DISABLED', true);
+      define('WP_AUTO_UPDATE_CORE', false);
+
+    # Security and performance
+    WORDPRESS_AUTH_KEY: "your-unique-auth-key-here"
+    WORDPRESS_SECURE_AUTH_KEY: "your-unique-secure-auth-key-here"
+    WORDPRESS_LOGGED_IN_KEY: "your-unique-logged-in-key-here"
+    WORDPRESS_NONCE_KEY: "your-unique-nonce-key-here"
+    WORDPRESS_AUTH_SALT: "your-unique-auth-salt-here"
+    WORDPRESS_SECURE_AUTH_SALT: "your-unique-secure-auth-salt-here"
+    WORDPRESS_LOGGED_IN_SALT: "your-unique-logged-in-salt-here"
+    WORDPRESS_NONCE_SALT: "your-unique-nonce-salt-here"
+
+controllers:
+  main:
+    replicas: 2
+    containers:
+      main:
+        image:
+          repository: "wordpress"
+          tag: "6.4-apache"
+          pullPolicy: "IfNotPresent"
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 200m
+            memory: 256Mi
+        # Health checks for WordPress
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /wp-admin/install.php
+                port: 80
+              initialDelaySeconds: 60
+              periodSeconds: 30
+              timeoutSeconds: 10
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /wp-admin/install.php
+                port: 80
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              timeoutSeconds: 5
+
+# Service configuration
+service:
+  main:
+    ports:
+      http:
+        port: 80
+        targetPort: 80
+        protocol: HTTP
+
+# Ingress configuration for WordPress
+ingress:
+  main:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+      nginx.ingress.kubernetes.io/client-max-body-size: "100m"
+    hosts:
+    - host: "wordpress.example.com"
+      paths:
+      - path: /
+        pathType: Prefix
+        service:
+          name: main
+          port: http
+    tls:
+    - secretName: wordpress-tls
+      hosts:
+      - wordpress.example.com
+
+# Database connection for WordPress
+database:
+  mariaDbRef:
+    name: "wordpress-mariadb"
+    namespace: "database"
+  options:
+    charset: "utf8mb4"
+    collation: "utf8mb4_unicode_ci"
+    serverVersion: "10.11.0-MariaDB"
+
+# WordPress-specific persistence configuration
+persistence:
+  # WordPress content directory (uploads, themes, plugins)
+  app-data:
+    enabled: true
+    type: persistentVolumeClaim
+    size: 20Gi
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    retain: true
+    globalMounts:
+    - path: /var/www/html/wp-content
+      readOnly: false
+
+  # WordPress uploads directory (media files)
+  uploads:
+    enabled: true
+    type: persistentVolumeClaim
+    size: 50Gi
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    retain: true
+    globalMounts:
+    - path: /var/www/html/wp-content/uploads
+      readOnly: false
+
+  # Shared storage for multi-replica setups
+  shared:
+    enabled: true
+    type: persistentVolumeClaim
+    size: 30Gi
+    storageClass: ""
+    accessMode: ReadWriteMany
+    retain: true
+    globalMounts:
+    - path: /var/www/html/wp-content/cache
+      readOnly: false
+
+  # Cache storage for performance (WordPress cache plugins)
+  cache:
+    enabled: true
+    type: emptyDir
+    medium: Memory
+    sizeLimit: 2Gi
+    globalMounts:
+    - path: /tmp/wordpress-cache
+      readOnly: false
+
+  # Sessions not typically needed for WordPress
+  sessions:
+    enabled: false
+    type: persistentVolumeClaim
+    size: 1Gi
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    retain: false
+    globalMounts:
+    - path: /tmp/sessions
+      readOnly: false
+
+# WordPress-specific configuration
+wordpress:
+  # Enable multisite (optional)
+  multisite:
+    enabled: false
+    subdomain: false
+
+  # WordPress CLI container (for maintenance tasks)
+  cli:
+    enabled: true
+    image:
+      repository: "wordpress"
+      tag: "cli-2.8"
+      pullPolicy: "IfNotPresent"
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
+
+  # Backup configuration (optional)
+  backup:
+    enabled: false
+    schedule: "0 2 * * *" # Daily at 2 AM
+    retention: 7 # Keep 7 days of backups
+
+# Common labels for WordPress
+commonLabels:
+  app.kubernetes.io/component: "wordpress-application"
+  app.kubernetes.io/part-of: "wordpress-stack"
+  framework: "wordpress"
+
+commonAnnotations:
+  "helm.sh/resource-policy": "keep"
+  "app.kubernetes.io/framework": "wordpress"

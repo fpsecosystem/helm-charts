@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Setup script for mariadb-library-chart development
+# Setup script for multi-chart Helm repository development
 set -e
 
-echo "🚀 Setting up MariaDB Library Chart development environment..."
+echo "🚀 Setting up Multi-Chart Helm Repository development environment..."
 
 # Check prerequisites
 echo "🔍 Checking prerequisites..."

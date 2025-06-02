@@ -17,3 +17,4 @@ keywords:
 - operator
 annotations:
   category: Database
+icon: https://raw.githubusercontent.com/fpsecosystem/helm-charts/main/logo.png
