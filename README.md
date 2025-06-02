@@ -52,6 +52,42 @@ dependencies:
 
 [📖 View Documentation](https://github.com/fpsecosystem/helm-charts/tree/main/imagepullsecret-library-chart) | [⬇️ Download](https://github.com/fpsecosystem/helm-charts/releases/tag/imagepullsecret-library-chart-0.1.3)
 
+---
+
+### Universal PHP Application Chart
+[![Chart Version](https://img.shields.io/badge/Chart-0.3.0-blue)](https://github.com/fpsecosystem/helm-charts/releases/tag/application-0.3.0)
+[![Type](https://img.shields.io/badge/Type-Application-green)](https://helm.sh/docs/topics/charts/)
+
+A universal Helm chart for deploying PHP applications including WordPress, Laravel, Symfony, and other PHP frameworks.
+
+**Features:**
+- 🌐 Universal support for WordPress, Laravel, Symfony, and any PHP application
+- 💾 Flexible persistence with bjw-s common library patterns
+- 🗄️ Built-in MariaDB operator integration with automatic connection
+- ⚙️ Dynamic ConfigMap-based environment variable management
+- ⚡ High availability with multi-replica support and shared storage
+- 🔐 Secure handling of sensitive and non-sensitive configuration
+- 📱 Modern Kubernetes patterns using bjw-s common library
+
+**Quick Deploy Examples:**
+```bash
+# Deploy WordPress
+helm install my-wordpress fps-charts/application -f values-wordpress.yaml
+
+# Deploy Laravel
+helm install my-laravel fps-charts/application -f values-laravel.yaml
+
+# Deploy Symfony
+helm install my-symfony fps-charts/application -f values-symfony.yaml
+```
+
+**Framework-Specific Values:**
+- `values-wordpress.yaml` - WordPress-optimized configuration
+- `values-laravel.yaml` - Laravel-optimized configuration  
+- `values-symfony.yaml` - Symfony-optimized configuration
+
+[📖 View Documentation](https://github.com/fpsecosystem/helm-charts/tree/main/application) | [⬇️ Download](https://github.com/fpsecosystem/helm-charts/releases/tag/application-0.3.0)
+
 ## 🚀 Quick Start
 
 ### 1. Add the Helm Repository
