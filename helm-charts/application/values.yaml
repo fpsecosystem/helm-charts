@@ -5,6 +5,10 @@
 # Application configuration
 # These values will be added to ConfigMap resources
 appConfig:
+  # Framework detection - automatically configures database variables
+  # Supported: wordpress, laravel, symfony
+  framework: ""
+
   # Non-sensitive environment variables (ConfigMap)
   configMap:
     APP_ENV: "prod"

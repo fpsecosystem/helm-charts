@@ -251,3 +251,62 @@ or you can manually specify the domain in values.yaml
 {{- printf "%s.example.com" .Release.Name -}}
 {{- end }}
 {{- end }}
+
+{{/*
+Generate Laravel database configuration
+This creates individual DB_* environment variables that Laravel expects
+*/}}
+{{- define "application.laravelDatabaseConfig" -}}
+{{- $username := printf "%s-user" (include "application.fullname" .) -}}
+{{- $database := printf "%s-db" (include "application.fullname" .) -}}
+{{- $host := include "application.mariadbHost" . -}}
+{{- $port := include "application.mariadbPort" . | toString -}}
+DB_CONNECTION: "mysql"
+DB_HOST: {{ $host | quote }}
+DB_PORT: {{ $port | quote }}
+DB_DATABASE: {{ $database | quote }}
+DB_USERNAME: {{ $username | quote }}
+DB_PASSWORD: "${DATABASE_PASSWORD}"
+{{- end }}
+
+{{/*
+Generate WordPress database configuration
+This creates WORDPRESS_DB_* environment variables that WordPress expects
+*/}}
+{{- define "application.wordpressDatabaseConfig" -}}
+{{- $username := printf "%s-user" (include "application.fullname" .) -}}
+{{- $database := printf "%s-db" (include "application.fullname" .) -}}
+{{- $host := include "application.mariadbHost" . -}}
+{{- $port := include "application.mariadbPort" . | toString -}}
+WORDPRESS_DB_HOST: {{ printf "%s:%s" $host $port | quote }}
+WORDPRESS_DB_NAME: {{ $database | quote }}
+WORDPRESS_DB_USER: {{ $username | quote }}
+WORDPRESS_DB_PASSWORD: "${DATABASE_PASSWORD}"
+{{- end }}
+
+{{/*
+Generate Symfony database configuration
+This creates DATABASE_URL environment variable that Symfony expects
+*/}}
+{{- define "application.symfonyDatabaseConfig" -}}
+{{- $databaseUrl := include "application.databaseUrl" . -}}
+DATABASE_URL: {{ $databaseUrl | quote }}
+{{- end }}
+
+{{/*
+Generate framework-specific database configuration
+This automatically detects the framework and generates appropriate database variables
+*/}}
+{{- define "application.frameworkDatabaseConfig" -}}
+{{- $framework := .Values.appConfig.framework | lower -}}
+{{- if eq $framework "laravel" -}}
+{{- include "application.laravelDatabaseConfig" . }}
+{{- else if eq $framework "wordpress" -}}
+{{- include "application.wordpressDatabaseConfig" . }}
+{{- else if eq $framework "symfony" -}}
+{{- include "application.symfonyDatabaseConfig" . }}
+{{- else -}}
+{{- /* Default to Symfony format if no framework specified */ -}}
+{{- include "application.symfonyDatabaseConfig" . }}
+{{- end -}}
+{{- end }}

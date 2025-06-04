@@ -4,11 +4,15 @@
 
 # Application configuration for WordPress
 appConfig:
+  # Framework detection - automatically configures database variables
+  framework: "wordpress"
+
   configMap:
-    WORDPRESS_DB_HOST: "mariadb"
-    WORDPRESS_DB_NAME: "wordpress_db"
-    WORDPRESS_DB_USER: "wordpress_user"
-    WORDPRESS_DB_PASSWORD: "secure_password"
+    # WORDPRESS_DB_* variables will be automatically generated based on framework setting
+    # WORDPRESS_DB_HOST: "mariadb"
+    # WORDPRESS_DB_NAME: "wordpress_db"
+    # WORDPRESS_DB_USER: "wordpress_user"
+    # WORDPRESS_DB_PASSWORD: "secure_password"
     WORDPRESS_TABLE_PREFIX: "wp_"
 
     # WordPress configuration

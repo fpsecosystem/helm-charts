@@ -4,6 +4,9 @@
 
 # Application configuration for Laravel
 appConfig:
+  # Framework detection - automatically configures database variables
+  framework: "laravel"
+
   configMap:
     APP_NAME: "Laravel"
     APP_ENV: "production"
@@ -16,12 +19,13 @@ appConfig:
     LOG_DEPRECATIONS_CHANNEL: "null"
     LOG_LEVEL: "error"
 
-    DB_CONNECTION: "mysql"
-    DB_HOST: "mariadb"
-    DB_PORT: "3306"
-    DB_DATABASE: "laravel_db"
-    DB_USERNAME: "laravel_user"
-    DB_PASSWORD: "secure_password"
+    # DB_* variables will be automatically generated based on framework setting
+    # DB_CONNECTION: "mysql"
+    # DB_HOST: "mariadb"
+    # DB_PORT: "3306"
+    # DB_DATABASE: "laravel_db"
+    # DB_USERNAME: "laravel_user"
+    # DB_PASSWORD: "secure_password"
 
     BROADCAST_DRIVER: "log"
     CACHE_DRIVER: "file"

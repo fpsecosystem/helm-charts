@@ -43,6 +43,30 @@ helm install my-symfony ./application -f values-symfony.yaml \
 
 ## Configuration
 
+### Framework Detection
+
+The chart automatically configures database connections based on the specified framework:
+
+```yaml
+appConfig:
+  # Framework detection - automatically configures database variables
+  # Supported: wordpress, laravel, symfony
+  framework: "laravel"
+
+  configMap:
+    APP_ENV: "production"
+    # Database variables are automatically generated based on framework:
+    # Laravel: DB_CONNECTION, DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD
+    # Symfony: DATABASE_URL
+    # WordPress: WORDPRESS_DB_HOST, WORDPRESS_DB_NAME, WORDPRESS_DB_USER, WORDPRESS_DB_PASSWORD
+```
+
+**Framework-Specific Database Configuration:**
+- **Laravel**: Generates individual `DB_*` environment variables
+- **Symfony**: Generates `DATABASE_URL` in Doctrine format
+- **WordPress**: Generates `WORDPRESS_DB_*` environment variables
+- **No framework specified**: Defaults to Symfony format
+
 ### Application Configuration (`appConfig`)
 
 All application environment variables are managed through the `appConfig.configMap` section:
@@ -51,11 +75,64 @@ All application environment variables are managed through the `appConfig.configM
 appConfig:
   configMap:
     APP_ENV: "production"
-    DATABASE_URL: "mysql://user:pass@host:3306/db"
     # Add any environment variables your application needs
+    # Database variables are automatically added based on framework setting
 ```
 
 **Note**: Sensitive values should be provided via Helm values or external secrets, not hardcoded in values files.
+
+### Framework Detection Examples
+
+The framework detection automatically configures database variables. Here are examples of what gets generated:
+
+#### Laravel Framework
+```yaml
+appConfig:
+  framework: "laravel"
+  configMap:
+    APP_NAME: "Laravel"
+    APP_ENV: "production"
+```
+
+**Generated Database Variables:**
+```yaml
+DB_CONNECTION: "mysql"
+DB_HOST: "mariadb.database.svc.cluster.local"
+DB_PORT: "3306"
+DB_DATABASE: "my-laravel-app-db"
+DB_USERNAME: "my-laravel-app-user"
+DB_PASSWORD: "${DATABASE_PASSWORD}"
+```
+
+#### Symfony Framework
+```yaml
+appConfig:
+  framework: "symfony"
+  configMap:
+    APP_ENV: "prod"
+    APP_SECRET: "your-secret"
+```
+
+**Generated Database Variables:**
+```yaml
+DATABASE_URL: "mysql://my-symfony-app-user:${DATABASE_PASSWORD}@mariadb.database.svc.cluster.local:3306/my-symfony-app-db?serverVersion=10.11.0-MariaDB&charset=utf8mb4"
+```
+
+#### WordPress Framework
+```yaml
+appConfig:
+  framework: "wordpress"
+  configMap:
+    WORDPRESS_TABLE_PREFIX: "wp_"
+```
+
+**Generated Database Variables:**
+```yaml
+WORDPRESS_DB_HOST: "mariadb.database.svc.cluster.local:3306"
+WORDPRESS_DB_NAME: "my-wordpress-db"
+WORDPRESS_DB_USER: "my-wordpress-user"
+WORDPRESS_DB_PASSWORD: "${DATABASE_PASSWORD}"
+```
 
 ### Persistence Configuration
 

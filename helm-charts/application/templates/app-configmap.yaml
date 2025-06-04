@@ -1,5 +1,5 @@
 {{- /*
-App ConfigMap for Symfony environment variables
+App ConfigMap for application environment variables
 This ConfigMap stores non-sensitive application configuration
 */ -}}
 apiVersion: v1
@@ -11,6 +11,11 @@ metadata:
   annotations:
     {{- include "application.annotations" . | nindent 4 }}
 data:
+  {{- /* Include framework-specific database configuration if framework is specified or use default */ -}}
+  {{- if or .Values.appConfig.framework .Values.database }}
+  {{- include "application.frameworkDatabaseConfig" . | nindent 2 }}
+  {{- end }}
+  {{- /* Include user-defined configuration variables */ -}}
   {{- with .Values.appConfig.configMap }}
   {{- range $key, $value := . }}
   {{ $key }}: {{ $value | quote }}

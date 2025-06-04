@@ -4,11 +4,14 @@
 
 # Application configuration for Symfony
 appConfig:
+  # Framework detection - automatically configures database variables
+  framework: "symfony"
+
   configMap:
     APP_ENV: "prod"
     APP_DEBUG: "false"
     APP_SECRET: "your-32-character-secret-here"
-    DATABASE_URL: "mysql://user:password@mariadb:3306/symfony_db?serverVersion=10.11.0-MariaDB&charset=utf8mb4"
+    # DATABASE_URL will be automatically generated based on framework setting
     MAILER_DSN: "smtp://localhost:587"
     MESSENGER_TRANSPORT_DSN: "doctrine://default"
     TRUSTED_PROXIES: "127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
