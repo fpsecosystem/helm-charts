@@ -63,6 +63,10 @@ ingress:
           port: http
     tls: []
 
+  # Test ingress (only for development/testing)
+  test:
+    enabled: false
+
 # Database connection configuration (example for MariaDB)
 database:
   # MariaDB reference for operator-based dynamic detection
