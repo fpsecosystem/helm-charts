@@ -1,14 +1,16 @@
 🚀 Universal Application Chart - {{ .Values.appConfig.framework | default "Custom" | title }} Application Deployed!
 
-{{- if .Values.ingress.main.enabled }}
+{{- if and .Values.ingress.main .Values.ingress.main.enabled }}
 {{- if .Values.ingress.main.dynamicDomain }}
 📱 Access your application:
    URL: http://{{ .Release.Name }}.{{ .Values.ingress.main.dynamicDomain }}
    Test: curl -H "Host: {{ .Release.Name }}.{{ .Values.ingress.main.dynamicDomain }}" http://localhost
 {{- else }}
+{{- if .Values.ingress.main.hosts }}
 {{- range $host := .Values.ingress.main.hosts }}
 {{- range .paths }}
    URL: http{{ if $.Values.ingress.main.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
