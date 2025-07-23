@@ -1,8 +1,8 @@
 apiVersion: v2
 name: application
-description: Multi-purpose PHP application chart using mariadb-library-chart
+description: Universal PHP application chart for WordPress, Laravel, Symfony with framework detection and automatic database configuration
 type: application
-version: 0.3.0
+version: 0.4.0
 appVersion: "1.0.0"
 
 icon: https://raw.githubusercontent.com/fpsecosystem/helm-charts/main/logo.png
@@ -11,9 +11,6 @@ dependencies:
 - name: common
   version: "4.0.1"
   repository: "https://bjw-s-labs.github.io/helm-charts"
-- name: mariadb-library-chart
-  version: "0.2.0"
-  repository: "https://fpsecosystem.github.io/helm-charts"
 
 maintainers:
 - name: FPS Ecosystem
@@ -23,11 +20,13 @@ keywords:
 - php
 - symfony
 - laravel
+- wordpress
 - application
-- php
 - mariadb
 - database
 - web-application
+- framework-detection
+- universal-chart
 
 home: https://github.com/fpsecosystem/helm-charts
 sources:

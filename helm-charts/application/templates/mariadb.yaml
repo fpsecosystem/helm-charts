@@ -1,56 +1,120 @@
-# MariaDB Database, User, and Grant resources using the library chart
-# Note: This template demonstrates how to use the mariadb-library-chart
-# but requires the MariaDB Operator to be installed in your cluster.
-#
-# To use this template, uncomment the sections below and ensure
-# the MariaDB Operator is available.
+{{- /*
+MariaDB Resources for application
+This template creates MariaDB database, user, grant, and password secret resources
+*/ -}}
 
-{{/*
-{{- $libValues := index .Values "mariadb-library-chart" -}}
-{{- $context := dict "Values" $libValues "Chart" .Chart "Release" .Release -}}
-
-{{- if $libValues.database.enabled }}
-{{ include "mariadb-library.database" $context }}
-{{- end }}
-
-{{- if $libValues.user.enabled }}
-{{- if $libValues.user.passwordSecret.generate }}
+{{/* Password Secret */}}
+{{- if and .Values.mariadb.enabled .Values.mariadb.user.enabled .Values.mariadb.user.passwordSecret.generate }}
 ---
-{{ include "mariadb-library.secret" $context }}
-{{- end }}
----
-{{ include "mariadb-library.user" $context }}
-{{- end }}
-
-{{- if $libValues.grant.enabled }}
----
-{{ include "mariadb-library.grant" $context }}
-{{- end }}
-*/}}
-
-# For this example, we demonstrate the DATABASE_URL generation
-# without actually creating the MariaDB resources.
-# In a real deployment, you would:
-# 1. Install the MariaDB Operator
-# 2. Create a MariaDB instance
-# 3. Uncomment the template sections above
-# 4. Deploy this chart to create the database, user, and grants
-
-{{- $libValues := index .Values "mariadb-library-chart" -}}
-{{- if and $libValues.database.enabled $libValues.user.passwordSecret.generate }}
-# Example: Create a password secret for demonstration
-# (In real usage, this would be created by the library chart)
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ include "application.fullname" $ }}-password
+  name: {{ include "application.fullname" . }}-password
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "application.labels" . | nindent 4 }}
+    {{- with .Values.mariadb.user.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   annotations:
     {{- include "application.annotations" . | nindent 4 }}
-    "helm.sh/hook": "pre-install,pre-upgrade"
-    "helm.sh/hook-weight": "-5"
+    {{- with .Values.mariadb.user.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 type: Opaque
 data:
-  password: {{ randAlphaNum 32 | b64enc | quote }}
+  {{ .Values.mariadb.user.passwordSecret.key }}: {{ include "application.generatePassword" . | b64enc }}
+{{- end }}
+
+{{/* Database Resource */}}
+{{- if and .Values.mariadb.enabled .Values.mariadb.database.enabled }}
+---
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: Database
+metadata:
+  name: {{ include "application.databaseName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "application.labels" . | nindent 4 }}
+    {{- with .Values.mariadb.database.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- include "application.annotations" . | nindent 4 }}
+    {{- with .Values.mariadb.database.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  mariaDbRef:
+    name: {{ .Values.mariadb.database.mariaDbRef.name }}
+    {{- if .Values.mariadb.database.mariaDbRef.namespace }}
+    namespace: {{ .Values.mariadb.database.mariaDbRef.namespace }}
+    {{- end }}
+  name: {{ include "application.databaseName" . }}
+  characterSet: {{ .Values.mariadb.database.characterSet }}
+  collate: {{ .Values.mariadb.database.collate }}
+{{- end }}
+
+{{/* User Resource */}}
+{{- if and .Values.mariadb.enabled .Values.mariadb.user.enabled }}
+---
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: User
+metadata:
+  name: {{ include "application.username" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "application.labels" . | nindent 4 }}
+    {{- with .Values.mariadb.user.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- include "application.annotations" . | nindent 4 }}
+    {{- with .Values.mariadb.user.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  mariaDbRef:
+    name: {{ .Values.mariadb.user.mariaDbRef.name }}
+    {{- if .Values.mariadb.user.mariaDbRef.namespace }}
+    namespace: {{ .Values.mariadb.user.mariaDbRef.namespace }}
+    {{- end }}
+  passwordSecretKeyRef:
+    name: {{ include "application.passwordSecretName" . }}
+    key: {{ .Values.mariadb.user.passwordSecret.key }}
+  name: {{ include "application.username" . }}
+  host: {{ .Values.mariadb.user.host | quote }}
+  maxUserConnections: {{ .Values.mariadb.user.maxUserConnections }}
+{{- end }}
+
+{{/* Grant Resource */}}
+{{- if and .Values.mariadb.enabled .Values.mariadb.grant.enabled }}
+---
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: Grant
+metadata:
+  name: {{ include "application.fullname" . }}-grant
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "application.labels" . | nindent 4 }}
+    {{- with .Values.mariadb.grant.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- include "application.annotations" . | nindent 4 }}
+    {{- with .Values.mariadb.grant.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  mariaDbRef:
+    name: {{ .Values.mariadb.grant.mariaDbRef.name }}
+    {{- if .Values.mariadb.grant.mariaDbRef.namespace }}
+    namespace: {{ .Values.mariadb.grant.mariaDbRef.namespace }}
+    {{- end }}
+  privileges:
+    {{- toYaml .Values.mariadb.grant.privileges | nindent 4 }}
+  database: {{ if .Values.mariadb.grant.database }}{{ .Values.mariadb.grant.database }}{{ else }}{{ include "application.databaseName" . }}{{ end }}
+  table: {{ .Values.mariadb.grant.table | quote }}
+  username: {{ if .Values.mariadb.grant.username }}{{ .Values.mariadb.grant.username }}{{ else }}{{ include "application.username" . }}{{ end }}
+  host: {{ .Values.mariadb.grant.host | quote }}
 {{- end }}

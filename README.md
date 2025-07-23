@@ -1,162 +1,393 @@
-# FPS Ecosystem Helm Charts
+# Universal Application Helm Chart
 
-Welcome to the FPS Ecosystem Helm Charts repository! This repository contains production-ready Helm charts for Kubernetes applications and infrastructure components.
-
-## 📦 Available Charts
-
-### MariaDB Library Chart
-[![Chart Version](https://img.shields.io/badge/Chart-0.1.2-blue)](https://github.com/fpsecosystem/helm-charts/releases/tag/mariadb-library-chart-0.1.2)
-[![Type](https://img.shields.io/badge/Type-Library-orange)](https://helm.sh/docs/topics/library_charts/)
-
-A Helm library chart for managing MariaDB databases and users using the MariaDB Operator.
-
-**Features:**
-- 🗃️ Database creation and management
-- 👤 User management with custom permissions
-- 🔐 Secure password generation and storage
-- 🔗 Grant management for fine-grained access control
-- 📊 Integration with MariaDB Operator
-
-**Usage:**
-```yaml
-dependencies:
-  - name: mariadb-library-chart
-    version: "0.1.2"
-    repository: "https://fpsecosystem.github.io/helm-charts"
-```
-
-[📖 View Documentation](https://github.com/fpsecosystem/helm-charts/tree/main/mariadb-library-chart) | [⬇️ Download](https://github.com/fpsecosystem/helm-charts/releases/tag/mariadb-library-chart-0.1.2)
-
----
-
-### Image Pull Secret Chart
-[![Chart Version](https://img.shields.io/badge/Chart-0.1.3-blue)](https://github.com/fpsecosystem/helm-charts/releases/tag/imagepullsecret-library-chart-0.1.3)
-[![Type](https://img.shields.io/badge/Type-Application-green)](https://helm.sh/docs/topics/charts/)
-
-A Helm application chart for managing Docker registry image pull secrets.
-
-**Features:**
-- 🐳 Docker registry authentication
-- 🔑 Secure credential management
-- 🎯 Multiple registry support
-- 📝 Automatic secret generation
-- 🔄 Easy integration with existing workloads
-
-**Usage:**
-```yaml
-dependencies:
-  - name: imagepullsecret-library-chart
-    version: "0.1.3"
-    repository: "https://fpsecosystem.github.io/helm-charts"
-```
-
-[📖 View Documentation](https://github.com/fpsecosystem/helm-charts/tree/main/imagepullsecret-library-chart) | [⬇️ Download](https://github.com/fpsecosystem/helm-charts/releases/tag/imagepullsecret-library-chart-0.1.3)
-
----
-
-### Universal PHP Application Chart
-[![Chart Version](https://img.shields.io/badge/Chart-0.3.0-blue)](https://github.com/fpsecosystem/helm-charts/releases/tag/application-0.3.0)
-[![Type](https://img.shields.io/badge/Type-Application-green)](https://helm.sh/docs/topics/charts/)
-
-A universal Helm chart for deploying PHP applications including WordPress, Laravel, Symfony, and other PHP frameworks.
-
-**Features:**
-- 🌐 Universal support for WordPress, Laravel, Symfony, and any PHP application
-- 💾 Flexible persistence with bjw-s common library patterns
-- 🗄️ Built-in MariaDB operator integration with automatic connection
-- ⚙️ Dynamic ConfigMap-based environment variable management
-- ⚡ High availability with multi-replica support and shared storage
-- 🔐 Secure handling of sensitive and non-sensitive configuration
-- 📱 Modern Kubernetes patterns using bjw-s common library
-
-**Quick Deploy Examples:**
-```bash
-# Deploy WordPress
-helm install my-wordpress fps-charts/application -f values-wordpress.yaml
-
-# Deploy Laravel
-helm install my-laravel fps-charts/application -f values-laravel.yaml
-
-# Deploy Symfony
-helm install my-symfony fps-charts/application -f values-symfony.yaml
-```
-
-**Framework-Specific Values:**
-- `values-wordpress.yaml` - WordPress-optimized configuration
-- `values-laravel.yaml` - Laravel-optimized configuration
-- `values-symfony.yaml` - Symfony-optimized configuration
-
-[📖 View Documentation](https://github.com/fpsecosystem/helm-charts/tree/main/application) | [⬇️ Download](https://github.com/fpsecosystem/helm-charts/releases/tag/application-0.3.0)
+Deploy any PHP application (Laravel, WordPress, Symfony, or custom) with minimal configuration by simply specifying your framework and container image. This chart handles database setup, environment variables, and deployment automatically.
 
 ## 🚀 Quick Start
 
-### 1. Add the Helm Repository
+Deploy any application in 2 steps:
+1. **Set your framework** (laravel, wordpress, symfony, or leave empty for custom)
+2. **Set your container image**
 
 ```bash
-helm repo add fps-charts https://fpsecosystem.github.io/helm-charts
-helm repo update
+# Deploy Laravel application
+helm install my-laravel-app . \
+  --set appConfig.framework="laravel" \
+  --set controllers.main.containers.main.image.repository="your-registry/laravel-app" \
+  --set controllers.main.containers.main.image.tag="latest"
+
+# Deploy WordPress site
+helm install my-wordpress . \
+  --set appConfig.framework="wordpress" \
+  --set controllers.main.containers.main.image.repository="wordpress" \
+  --set controllers.main.containers.main.image.tag="6.4-apache"
+
+# Deploy Symfony application
+helm install my-symfony . \
+  --set appConfig.framework="symfony" \
+  --set controllers.main.containers.main.image.repository="your-registry/symfony-app" \
+  --set controllers.main.containers.main.image.tag="latest"
 ```
 
-### 2. Search Available Charts
+## ✨ Key Features
 
-```bash
-helm search repo fps-charts
-```
+- **Framework Detection**: Automatically configures database environment variables for Laravel, WordPress, and Symfony
+- **MariaDB Integration**: Built-in MariaDB operator support with dynamic connection detection
+- **Dynamic Ingress**: Automatic subdomain generation with `{release-name}.{domain}` pattern
+- **Minimal Configuration**: Deploy any application with just framework and image settings
+- **Production Ready**: Includes persistence, health checks, and scaling configuration
 
-### 3. Install a Chart
+## 🎯 Framework Detection
 
-For application charts:
-```bash
-# Install the imagepullsecret chart
-helm install my-secrets fps-charts/imagepullsecret-library-chart --values my-values.yaml
-```
+The chart automatically detects your framework and configures the appropriate database environment variables:
 
-For library charts (as dependencies):
+### Laravel Applications
+Set `appConfig.framework: "laravel"` and get:
 ```yaml
-# In your Chart.yaml
-dependencies:
-  - name: mariadb-library-chart
-    version: "0.1.2"
-    repository: "https://fpsecosystem.github.io/helm-charts"
+DB_CONNECTION: mysql
+DB_HOST: framework-mariadb.default.svc.cluster.local
+DB_PORT: 3306
+DB_DATABASE: my-laravel-app-db
+DB_USERNAME: my-laravel-app-user
+DB_PASSWORD: <auto-generated>
 ```
 
-## 📋 Prerequisites
+### WordPress Applications
+Set `appConfig.framework: "wordpress"` and get:
+```yaml
+WORDPRESS_DB_HOST: framework-mariadb.default.svc.cluster.local:3306
+WORDPRESS_DB_NAME: my-wordpress-db
+WORDPRESS_DB_USER: my-wordpress-user
+WORDPRESS_DB_PASSWORD: <auto-generated>
+```
 
-- **Kubernetes**: 1.19+
-- **Helm**: 3.2.0+
-- **MariaDB Operator**: Required for MariaDB Library Chart
+### Symfony Applications
+Set `appConfig.framework: "symfony"` and get:
+```yaml
+DATABASE_URL: mysql://my-symfony-app-user:<auto-generated>@framework-mariadb.default.svc.cluster.local:3306/my-symfony-app-db?serverVersion=10.11&charset=utf8mb4
+```
 
-## 🔧 Configuration
+### Custom Applications
+Leave `appConfig.framework` empty and get generic database variables plus `DATABASE_URL`.
 
-Each chart comes with comprehensive configuration options. Check the individual chart documentation for detailed configuration examples and best practices.
+## 📦 Complete Example Deployments
 
-## 📚 Documentation
+### Laravel Application with MariaDB
 
-- [MariaDB Library Chart Documentation](https://github.com/fpsecosystem/helm-charts/tree/main/mariadb-library-chart)
-- [Image Pull Secret Chart Documentation](https://github.com/fpsecosystem/helm-charts/tree/main/imagepullsecret-library-chart)
-- [GitHub Repository](https://github.com/fpsecosystem/helm-charts)
+```yaml
+# values-laravel-example.yaml
+appConfig:
+  framework: "laravel"
+  configMap:
+    APP_ENV: "production"
+    APP_NAME: "My Laravel App"
+    LOG_LEVEL: "info"
+
+# Your application image
+controllers:
+  main:
+    containers:
+      main:
+        image:
+          repository: "your-registry/laravel-app"
+          tag: "v1.0.0"
+
+# Enable database
+mariadb:
+  enabled: true
+  database:
+    mariaDbRef:
+      name: "framework-mariadb"  # MariaDB instance name
+
+# Enable ingress (will create my-laravel-app.localhost)
+ingress:
+  main:
+    enabled: true
+    className: "traefik"
+    dynamicDomain: "localhost"
+```
+
+Deploy:
+```bash
+helm install my-laravel-app . -f values-laravel-example.yaml
+```
+
+### WordPress Site with Storage
+
+```yaml
+# values-wordpress-example.yaml
+appConfig:
+  framework: "wordpress"
+  configMap:
+    WORDPRESS_TABLE_PREFIX: "wp_"
+
+controllers:
+  main:
+    containers:
+      main:
+        image:
+          repository: "wordpress"
+          tag: "6.4-apache"
+
+mariadb:
+  enabled: true
+  database:
+    mariaDbRef:
+      name: "framework-mariadb"
+
+# WordPress needs persistent storage
+persistence:
+  app-data:
+    enabled: true
+    size: 20Gi
+    globalMounts:
+      - path: /var/www/html/wp-content
+
+ingress:
+  main:
+    enabled: true
+    className: "traefik"
+    dynamicDomain: "localhost"
+```
+
+Deploy:
+```bash
+helm install my-wordpress . -f values-wordpress-example.yaml
+```
+
+### Symfony Application
+
+```yaml
+# values-symfony-example.yaml
+appConfig:
+  framework: "symfony"
+  configMap:
+    APP_ENV: "prod"
+    APP_SECRET: "your-symfony-secret"
+
+controllers:
+  main:
+    containers:
+      main:
+        image:
+          repository: "your-registry/symfony-app"
+          tag: "latest"
+
+mariadb:
+  enabled: true
+  database:
+    mariaDbRef:
+      name: "framework-mariadb"
+
+persistence:
+  app-data:
+    enabled: true
+    size: 8Gi
+    globalMounts:
+      - path: /var/www/html/var
+
+ingress:
+  main:
+    enabled: true
+    className: "traefik"
+    dynamicDomain: "localhost"
+```
+
+Deploy:
+```bash
+helm install my-symfony . -f values-symfony-example.yaml
+```
+
+## 🗄️ Database Setup
+
+### Prerequisites
+You need a MariaDB instance running with the MariaDB operator. Install it:
+
+```bash
+# Install MariaDB operator
+helm repo add mariadb-operator https://mariadb-operator.github.io/mariadb-operator
+helm install mariadb-operator-crds mariadb-operator/mariadb-operator-crds
+helm install mariadb-operator mariadb-operator/mariadb-operator
+
+# Create a MariaDB instance
+kubectl apply -f - <<EOF
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: MariaDB
+metadata:
+  name: framework-mariadb
+spec:
+  image: mariadb:10.11
+  port: 3306
+  username: root
+  passwordSecretKeyRef:
+    name: mariadb-root-password
+    key: password
+  database: framework
+  storage:
+    size: 10Gi
+EOF
+```
+
+### Automatic Database Configuration
+When you enable `mariadb.enabled: true`, the chart automatically:
+
+1. **Creates a database** named `{release-name}-db`
+2. **Creates a user** named `{release-name}-user` with a random password
+3. **Grants permissions** to the user on the database
+4. **Detects connection details** from the MariaDB operator (host, port, version)
+5. **Generates environment variables** based on your framework setting
+
+## 🌐 Dynamic Ingress
+
+The chart supports dynamic ingress host generation:
+
+```yaml
+ingress:
+  main:
+    enabled: true
+    className: "traefik"                    # Your ingress controller
+    dynamicDomain: "localhost"              # Or your domain
+    # Will create: {release-name}.localhost
+```
+
+For production, create a `staging-domain` secret:
+```bash
+kubectl create secret generic staging-domain --from-literal=domain=yourdomain.com
+```
+
+## 🔧 Configuration Reference
+
+### Essential Settings
+
+| Setting | Description | Example |
+|---------|-------------|---------|
+| `appConfig.framework` | Framework detection (laravel/wordpress/symfony) | `"laravel"` |
+| `controllers.main.containers.main.image.repository` | Your application image | `"your-registry/app"` |
+| `controllers.main.containers.main.image.tag` | Image tag | `"v1.0.0"` |
+| `mariadb.enabled` | Enable database integration | `true` |
+| `mariadb.database.mariaDbRef.name` | MariaDB instance name | `"framework-mariadb"` |
+| `ingress.main.enabled` | Enable ingress | `true` |
+| `ingress.main.dynamicDomain` | Domain for ingress | `"localhost"` |
+
+### Application Environment Variables
+
+Add any environment variables your application needs:
+
+```yaml
+appConfig:
+  configMap:
+    # Framework-specific database variables are added automatically
+    # Add your custom variables here:
+    APP_ENV: "production"
+    LOG_LEVEL: "info"
+    MAILER_DSN: "smtp://smtp.example.com:587"
+    REDIS_URL: "redis://redis:6379"
+```
+
+### Storage Configuration
+
+Configure persistent storage for your application:
+
+```yaml
+persistence:
+  app-data:
+    enabled: true
+    size: 10Gi
+    globalMounts:
+      - path: /var/www/html/storage      # Laravel
+      # - path: /var/www/html/var        # Symfony
+      # - path: /var/www/html/wp-content # WordPress
+```
+
+### Scaling and Resources
+
+Configure replicas and resource limits:
+
+```yaml
+controllers:
+  main:
+    replicas: 3
+    containers:
+      main:
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+```
+
+## 🧪 Testing Your Deployment
+
+After deployment, test your application:
+
+```bash
+# Check pod status
+kubectl get pods -l app.kubernetes.io/instance=my-app
+
+# Check database connection
+kubectl exec -it deployment/my-app -- env | grep -E "^(DB_|DATABASE_|WORDPRESS_DB_)"
+
+# Test ingress (if enabled)
+curl -H "Host: my-app.localhost" http://localhost
+
+# View logs
+kubectl logs -l app.kubernetes.io/instance=my-app -f
+```
+
+## 🚀 Production Deployment
+
+For production, use values files:
+
+1. **Create your values file** (e.g., `production-laravel.yaml`)
+2. **Set production-ready settings**:
+   - Specific image tags (not `latest`)
+   - Resource limits and requests
+   - Multiple replicas for HA
+   - Persistent storage configuration
+   - Proper ingress with TLS
+
+```bash
+# Production deployment
+helm upgrade --install my-laravel-app . \
+  -f production-laravel.yaml \
+  --namespace production \
+  --create-namespace
+```
+
+## 🔍 Troubleshooting
+
+### Database Connection Issues
+```bash
+# Check MariaDB instance
+kubectl get mariadb framework-mariadb
+
+# Check generated database resources
+kubectl get database,user,grant -l app.kubernetes.io/instance=my-app
+
+# Verify database environment variables
+kubectl exec deployment/my-app -- env | grep -E "^(DB_|DATABASE_)"
+```
+
+### Ingress Issues
+```bash
+# Check ingress resource
+kubectl get ingress
+
+# Test from inside cluster
+kubectl run test --rm -i --tty --image=nginx:alpine -- /bin/sh
+# Then: curl http://my-app-application:80
+```
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](https://github.com/fpsecosystem/helm-charts/blob/main/CONTRIBUTING.md) for details.
+This chart uses the [bjw-s common library](https://bjw-s.github.io/helm-charts/) for Kubernetes best practices. When contributing:
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/fpsecosystem/helm-charts/blob/main/LICENSE) file for details.
-
-## 📞 Support
-
-- 🐛 [Report Issues](https://github.com/fpsecosystem/helm-charts/issues)
-- 💬 [Discussions](https://github.com/fpsecosystem/helm-charts/discussions)
-- 📧 Email: contact@fpsecosystem.org
+1. Test with all supported frameworks
+2. Maintain framework detection functionality
+3. Follow bjw-s patterns for consistency
+4. Update documentation for new features
 
 ---
 
-## 📊 Repository Statistics
-
-| Chart | Version | Type | Downloads |
-|-------|---------|------|-----------|
-| [mariadb-library-chart](https://github.com/fpsecosystem/helm-charts/tree/main/mariadb-library-chart) | 0.1.2 | Library | [![Downloads](https://img.shields.io/github/downloads/fpsecosystem/helm-charts/mariadb-library-chart-0.1.2/total)](https://github.com/fpsecosystem/helm-charts/releases/tag/mariadb-library-chart-0.1.2) |
-| [imagepullsecret-library-chart](https://github.com/fpsecosystem/helm-charts/tree/main/imagepullsecret-library-chart) | 0.1.3 | Application | [![Downloads](https://img.shields.io/github/downloads/fpsecosystem/helm-charts/imagepullsecret-library-chart-0.1.3/total)](https://github.com/fpsecosystem/helm-charts/releases/tag/imagepullsecret-library-chart-0.1.3) |
-
-*Last updated: June 1, 2025*
+**🎯 The goal**: Deploy any application with minimal configuration by specifying framework and image. Everything else is handled automatically!

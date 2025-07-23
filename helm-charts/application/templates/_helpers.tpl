@@ -68,14 +68,15 @@ The serverVersion will be dynamically detected from MariaDB operator during Helm
 otherwise falls back to the configured value.
 */}}
 {{- define "application.databaseUrl" -}}
-{{- $dbConfig := .Values.database -}}
-{{- $username := printf "%s-user" (include "application.fullname" .) -}}
-{{- $database := printf "%s-db" (include "application.fullname" .) -}}
+{{- $dbConfig := .Values.mariadb -}}
+{{- $username := include "application.username" . -}}
+{{- $database := include "application.databaseName" . -}}
 {{- $host := include "application.mariadbHost" . -}}
 {{- $port := include "application.mariadbPort" . | toString -}}
-{{- $charset := $dbConfig.options.charset -}}
+{{- $charset := $dbConfig.connection.options.charset -}}
 {{- $serverVersion := include "application.mariadbVersion" . -}}
-{{- printf "mysql://%s:${DATABASE_PASSWORD}@%s:%s/%s?serverVersion=%s&charset=%s" $username $host $port $database $serverVersion $charset -}}
+{{- /* Create DATABASE_URL template that will be processed by init container */ -}}
+{{- printf "mysql://%s:__DATABASE_PASSWORD__@%s:%s/%s?serverVersion=%s&charset=%s" $username $host $port $database $serverVersion $charset -}}
 {{- end }}
 
 {{/*
@@ -83,11 +84,11 @@ Detect MariaDB version from operator using Helm lookup function
 This queries the Kubernetes API during template rendering to get the version
 */}}
 {{- define "application.mariadbVersion" -}}
-{{- $dbConfig := .Values.database -}}
-{{- $mariadbRef := $dbConfig.mariaDbRef -}}
+{{- $dbConfig := .Values.mariadb -}}
+{{- $mariadbRef := $dbConfig.database.mariaDbRef -}}
 {{- $namespace := $mariadbRef.namespace | default .Release.Namespace -}}
 {{- $resourceName := $mariadbRef.name -}}
-{{- $fallbackVersion := ($dbConfig.options).serverVersion | default "10.11.0-MariaDB" -}}
+{{- $fallbackVersion := ($dbConfig.connection.options).serverVersion | default "10.11.0-MariaDB" -}}
 
 {{- /* Try to lookup MariaDB resource from operator */ -}}
 {{- $mariadbResource := lookup "k8s.mariadb.com/v1alpha1" "MariaDB" $namespace $resourceName -}}
@@ -128,12 +129,12 @@ Detect MariaDB host from operator using Helm lookup function
 This queries the Kubernetes API during template rendering to get the host
 */}}
 {{- define "application.mariadbHost" -}}
-{{- $dbConfig := .Values.database -}}
-{{- $mariadbRef := $dbConfig.mariaDbRef -}}
+{{- $dbConfig := .Values.mariadb -}}
+{{- $mariadbRef := $dbConfig.database.mariaDbRef -}}
 {{- $namespace := $mariadbRef.namespace | default .Release.Namespace -}}
 {{- $resourceName := $mariadbRef.name -}}
 {{- $defaultHost := printf "%s.%s.svc.cluster.local" $resourceName $namespace -}}
-{{- $fallbackHost := ($dbConfig.server).host | default $defaultHost -}}
+{{- $fallbackHost := ($dbConfig.connection.server).host | default $defaultHost -}}
 
 {{- /* Try to lookup MariaDB resource from operator */ -}}
 {{- $mariadbResource := lookup "k8s.mariadb.com/v1alpha1" "MariaDB" $namespace $resourceName -}}
@@ -172,11 +173,11 @@ Detect MariaDB port from operator using Helm lookup function
 This queries the Kubernetes API during template rendering to get the port
 */}}
 {{- define "application.mariadbPort" -}}
-{{- $dbConfig := .Values.database -}}
-{{- $mariadbRef := $dbConfig.mariaDbRef -}}
+{{- $dbConfig := .Values.mariadb -}}
+{{- $mariadbRef := $dbConfig.database.mariaDbRef -}}
 {{- $namespace := $mariadbRef.namespace | default .Release.Namespace -}}
 {{- $resourceName := $mariadbRef.name -}}
-{{- $fallbackPort := ($dbConfig.server).port | default 3306 -}}
+{{- $fallbackPort := ($dbConfig.connection.server).port | default 3306 -}}
 
 {{- /* Try to lookup MariaDB resource from operator */ -}}
 {{- $mariadbResource := lookup "k8s.mariadb.com/v1alpha1" "MariaDB" $namespace $resourceName -}}
@@ -257,8 +258,8 @@ Generate Laravel database configuration
 This creates individual DB_* environment variables that Laravel expects
 */}}
 {{- define "application.laravelDatabaseConfig" -}}
-{{- $username := printf "%s-user" (include "application.fullname" .) -}}
-{{- $database := printf "%s-db" (include "application.fullname" .) -}}
+{{- $username := include "application.username" . -}}
+{{- $database := include "application.databaseName" . -}}
 {{- $host := include "application.mariadbHost" . -}}
 {{- $port := include "application.mariadbPort" . | toString -}}
 DB_CONNECTION: "mysql"
@@ -274,8 +275,8 @@ Generate WordPress database configuration
 This creates WORDPRESS_DB_* environment variables that WordPress expects
 */}}
 {{- define "application.wordpressDatabaseConfig" -}}
-{{- $username := printf "%s-user" (include "application.fullname" .) -}}
-{{- $database := printf "%s-db" (include "application.fullname" .) -}}
+{{- $username := include "application.username" . -}}
+{{- $database := include "application.databaseName" . -}}
 {{- $host := include "application.mariadbHost" . -}}
 {{- $port := include "application.mariadbPort" . | toString -}}
 WORDPRESS_DB_HOST: {{ printf "%s:%s" $host $port | quote }}
@@ -309,4 +310,59 @@ This automatically detects the framework and generates appropriate database vari
 {{- /* Default to Symfony format if no framework specified */ -}}
 {{- include "application.symfonyDatabaseConfig" . }}
 {{- end -}}
+{{- end }}
+
+{{/*
+Database name
+*/}}
+{{- define "application.databaseName" -}}
+{{- if .Values.mariadb.database.name }}
+{{- .Values.mariadb.database.name }}
+{{- else }}
+{{- include "application.fullname" . }}-db
+{{- end }}
+{{- end }}
+
+{{/*
+Username
+*/}}
+{{- define "application.username" -}}
+{{- if .Values.mariadb.user.name }}
+{{- .Values.mariadb.user.name }}
+{{- else }}
+{{- include "application.fullname" . }}-user
+{{- end }}
+{{- end }}
+
+{{/*
+Password secret name
+*/}}
+{{- define "application.passwordSecretName" -}}
+{{- if .Values.mariadb.user.passwordSecret.name }}
+{{- .Values.mariadb.user.passwordSecret.name }}
+{{- else }}
+{{- include "application.fullname" . }}-password
+{{- end }}
+{{- end }}
+
+{{/*
+Generate random password
+*/}}
+{{- define "application.generatePassword" -}}
+{{- if .Values.mariadb.user.passwordSecret.passwordLength }}
+{{- randAlphaNum (int .Values.mariadb.user.passwordSecret.passwordLength) }}
+{{- else }}
+{{- randAlphaNum 16 }}
+{{- end }}
+{{- end }}
+
+{{/*
+MariaDB reference namespace
+*/}}
+{{- define "application.mariadbNamespace" -}}
+{{- if .Values.mariadb.database.mariaDbRef.namespace }}
+{{- .Values.mariadb.database.mariaDbRef.namespace }}
+{{- else }}
+{{- .Release.Namespace }}
+{{- end }}
 {{- end }}

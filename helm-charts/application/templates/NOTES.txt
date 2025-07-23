@@ -1,41 +1,71 @@
-1. Get the application URL by running these commands:
-{{- if and .Values.ingress.main (hasKey .Values.ingress.main "enabled") (eq .Values.ingress.main.enabled true) }}
+🚀 Universal Application Chart - {{ .Values.appConfig.framework | default "Custom" | title }} Application Deployed!
+
+{{- if .Values.ingress.main.enabled }}
+{{- if .Values.ingress.main.dynamicDomain }}
+📱 Access your application:
+   URL: http://{{ .Release.Name }}.{{ .Values.ingress.main.dynamicDomain }}
+   Test: curl -H "Host: {{ .Release.Name }}.{{ .Values.ingress.main.dynamicDomain }}" http://localhost
+{{- else }}
 {{- range $host := .Values.ingress.main.hosts }}
-  {{- range .paths }}
-  http{{ if $.Values.ingress.main.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
-  {{- end }}
+{{- range .paths }}
+   URL: http{{ if $.Values.ingress.main.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+{{- end }}
+{{- end }}
 {{- end }}
 {{- else }}
-  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "application.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
-  echo "Visit http://127.0.0.1:8080 to use your application"
-  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:8000
+💻 Application Access (Port Forward):
+   export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "application.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
+   kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:80
+   Then visit: http://127.0.0.1:8080
 {{- end }}
 
-2. Database connection details (dynamically detected from MariaDB operator):
-   - Database URL: {{ include "application.databaseUrl" . }}
-   - Database Host: {{ include "application.mariadbHost" . }}
-   - Database Port: {{ include "application.mariadbPort" . }}
-   - Database Version: {{ include "application.mariadbVersion" . }}
-   - Database Name: {{ printf "%s-db" (include "application.fullname" .) }}
-   - Database User: {{ printf "%s-user" (include "application.fullname" .) }}
-   - Image: {{ .Values.controllers.main.containers.main.image.repository }}:{{ .Values.controllers.main.containers.main.image.tag }}
+🎯 Framework: {{ .Values.appConfig.framework | default "Custom" | title }}
+📦 Image: {{ .Values.controllers.main.containers.main.image.repository }}:{{ .Values.controllers.main.containers.main.image.tag }}
 
-3. To get the database password:
+{{- if .Values.mariadb.enabled }}
+
+🗄️  Database Integration:
+   - Host: {{ include "application.mariadbHost" . }}
+   - Port: {{ include "application.mariadbPort" . }}
+   - Database: {{ include "application.databaseName" . }}
+   - User: {{ include "application.username" . }}
+   - Version: {{ include "application.mariadbVersion" . }}
+
+{{- if .Values.appConfig.framework }}
+{{- $framework := .Values.appConfig.framework | lower }}
+{{- if eq $framework "laravel" }}
+🚀 Laravel Environment Variables (auto-configured):
+   DB_CONNECTION, DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD
+{{- else if eq $framework "wordpress" }}
+🚀 WordPress Environment Variables (auto-configured):
+   WORDPRESS_DB_HOST, WORDPRESS_DB_NAME, WORDPRESS_DB_USER, WORDPRESS_DB_PASSWORD
+{{- else if eq $framework "symfony" }}
+🚀 Symfony Environment Variables (auto-configured):
+   DATABASE_URL
+{{- end }}
+{{- end }}
+
+🔐 Get database password:
    kubectl get secret --namespace {{ .Release.Namespace }} {{ include "application.databasePasswordSecretName" . }} -o jsonpath="{.data.{{ include "application.databasePasswordSecretKey" . }}}" | base64 --decode
 
-4. Application deployment details:
-   - Environment: {{ .Values.appConfig.APP_ENV }}
-   - Image: {{ .Values.controllers.main.containers.main.image.repository }}:{{ .Values.controllers.main.containers.main.image.tag }}
-   - Pull Policy: {{ .Values.controllers.main.containers.main.image.pullPolicy }}
+💾 Connect to database directly:
+   kubectl run {{ include "application.fullname" . }}-mysql-client --rm --tty -i --restart='Never' \
+     --image docker.io/bitnami/mysql:8.0-debian-11 --namespace {{ .Release.Namespace }} \
+     --command -- mysql -h {{ include "application.mariadbHost" . }} \
+     -P {{ include "application.mariadbPort" . }} \
+     -u {{ include "application.username" . }} \
+     -p{{ `$(kubectl get secret --namespace {{ .Release.Namespace }} {{ include "application.databasePasswordSecretName" . }} -o jsonpath="{.data.{{ include "application.databasePasswordSecretKey" . }}}" | base64 --decode)` }} \
+     {{ include "application.databaseName" . }}
+{{- end }}
 
-5. To connect to the database directly:
-   kubectl run {{ include "application.fullname" . }}-mysql-client --rm --tty -i --restart='Never' --image docker.io/bitnami/mysql:8.0-debian-11 --namespace {{ .Release.Namespace }} --command -- mysql -h {{ include "application.mariadbHost" . }} -P {{ include "application.mariadbPort" . }} -u {{ printf "%s-user" (include "application.fullname" .) }} -p{{ `$(kubectl get secret --namespace {{ .Release.Namespace }} {{ include "application.databasePasswordSecretName" . }} -o jsonpath="{.data.{{ include "application.databasePasswordSecretKey" . }}}" | base64 --decode)` }} {{ printf "%s-db" (include "application.fullname" .) }}
+🔍 Useful Commands:
+   View logs: kubectl logs -l app.kubernetes.io/instance={{ .Release.Name }} -f
+   Shell access: kubectl exec -it deployment/{{ .Release.Name }}-application -- /bin/bash
+   Check env vars: kubectl exec deployment/{{ .Release.Name }}-application -- env | grep -E "^(DB_|DATABASE_|WORDPRESS_DB_)"
+   Uninstall: helm uninstall {{ .Release.Name }}
 
-{{ if eq .Values.appConfig.APP_ENV "dev" }}
-⚠️  WARNING: The application is running in development mode.
-   Make sure to set appConfig.APP_ENV to "prod" for production deployments.
-{{ end }}
-
-🎉 Your Symfony application is now deployed with MariaDB integration!
-   The DATABASE_URL environment variable is automatically configured
-   and ready to use in your Symfony application.
+{{- if .Values.appConfig.framework }}
+✨ Framework detection active! Database environment variables are automatically configured for {{ .Values.appConfig.framework | title }}.
+{{- else }}
+✨ Custom application deployed! Add appConfig.framework (laravel/wordpress/symfony) for automatic database configuration.
+{{- end }}

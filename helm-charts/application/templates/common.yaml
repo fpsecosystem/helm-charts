@@ -1,37 +1,50 @@
 {{/*
 Configure the main container with image and environment variables
 */}}
-{{- /* Configure the main container */ -}}
-{{- $mainContainer := dict }}
-{{- $_ := set $mainContainer "image" .Values.controllers.main.containers.main.image }}
-{{- $_ := set $mainContainer "resources" .Values.controllers.main.containers.main.resources }}
+{{- /* Start with the base container configuration from values */ -}}
+{{- $mainContainer := deepCopy .Values.controllers.main.containers.main }}
 
-{{- /* Start with a clean env map */ -}}
-{{- $envMap := dict }}
-
-{{- /* Add database environment variables */ -}}
-{{- $_ := set $envMap "DATABASE_URL" (dict "valueFrom" (dict "secretKeyRef" (dict "name" (printf "%s-config" (include "application.fullname" $)) "key" "DATABASE_URL"))) }}
-{{- $_ := set $envMap "DATABASE_PASSWORD" (dict "valueFrom" (dict "secretKeyRef" (dict "name" (include "application.databasePasswordSecretName" .) "key" (include "application.databasePasswordSecretKey" .)))) }}
-
-{{- /* Add all configMap variables dynamically */ -}}
-{{- range $key, $value := .Values.appConfig.configMap }}
-{{- $_ := set $envMap $key (dict "valueFrom" (dict "configMapKeyRef" (dict "name" (printf "%s-app-config" (include "application.fullname" $)) "key" $key))) }}
+{{- /* Add database environment variables as a simple list */ -}}
+{{- $envList := list }}
+{{- if .Values.mariadb.enabled }}
+{{- $envList = append $envList (dict "name" "DATABASE_HOST" "valueFrom" (dict "secretKeyRef" (dict "name" (printf "%s-config" (include "application.fullname" $)) "key" "DATABASE_HOST"))) }}
+{{- $envList = append $envList (dict "name" "DATABASE_PORT" "valueFrom" (dict "secretKeyRef" (dict "name" (printf "%s-config" (include "application.fullname" $)) "key" "DATABASE_PORT"))) }}
+{{- $envList = append $envList (dict "name" "DATABASE_NAME" "valueFrom" (dict "secretKeyRef" (dict "name" (printf "%s-config" (include "application.fullname" $)) "key" "DATABASE_NAME"))) }}
+{{- $envList = append $envList (dict "name" "DATABASE_USERNAME" "valueFrom" (dict "secretKeyRef" (dict "name" (printf "%s-config" (include "application.fullname" $)) "key" "DATABASE_USERNAME"))) }}
+{{- $envList = append $envList (dict "name" "DATABASE_PASSWORD" "valueFrom" (dict "secretKeyRef" (dict "name" (include "application.databasePasswordSecretName" .) "key" (include "application.databasePasswordSecretKey" .)))) }}
+{{- $envList = append $envList (dict "name" "DATABASE_CHARSET" "valueFrom" (dict "secretKeyRef" (dict "name" (printf "%s-config" (include "application.fullname" $)) "key" "DATABASE_CHARSET"))) }}
+{{- $envList = append $envList (dict "name" "DATABASE_SERVER_VERSION" "valueFrom" (dict "secretKeyRef" (dict "name" (printf "%s-config" (include "application.fullname" $)) "key" "DATABASE_SERVER_VERSION"))) }}
+{{- $envList = append $envList (dict "name" "DATABASE_URL" "value" (printf "mysql://$(DATABASE_USERNAME):$(DATABASE_PASSWORD)@$(DATABASE_HOST):$(DATABASE_PORT)/$(DATABASE_NAME)?serverVersion=$(DATABASE_SERVER_VERSION)&charset=$(DATABASE_CHARSET)")) }}
 {{- end }}
 
-{{- /* Add all secret variables dynamically */ -}}
-{{- range $key, $value := .Values.appConfig.secret }}
-{{- $_ := set $envMap $key (dict "valueFrom" (dict "secretKeyRef" (dict "name" (printf "%s-app-secret" (include "application.fullname" $)) "key" $key))) }}
+{{- /* Add configMap variables */ -}}
+{{- range $key, $value := .Values.appConfig.configMap }}
+{{- $envList = append $envList (dict "name" $key "valueFrom" (dict "configMapKeyRef" (dict "name" (printf "%s-app-config" (include "application.fullname" $)) "key" $key))) }}
+{{- end }}
+
+{{- /* Add framework-specific database variables if framework and mariadb are enabled */ -}}
+{{- if and .Values.appConfig.framework .Values.mariadb.enabled }}
+{{- $framework := .Values.appConfig.framework | lower }}
+{{- if eq $framework "laravel" }}
+{{- $envList = append $envList (dict "name" "DB_CONNECTION" "valueFrom" (dict "configMapKeyRef" (dict "name" (printf "%s-app-config" (include "application.fullname" $)) "key" "DB_CONNECTION"))) }}
+{{- $envList = append $envList (dict "name" "DB_HOST" "valueFrom" (dict "configMapKeyRef" (dict "name" (printf "%s-app-config" (include "application.fullname" $)) "key" "DB_HOST"))) }}
+{{- $envList = append $envList (dict "name" "DB_PORT" "valueFrom" (dict "configMapKeyRef" (dict "name" (printf "%s-app-config" (include "application.fullname" $)) "key" "DB_PORT"))) }}
+{{- $envList = append $envList (dict "name" "DB_DATABASE" "valueFrom" (dict "configMapKeyRef" (dict "name" (printf "%s-app-config" (include "application.fullname" $)) "key" "DB_DATABASE"))) }}
+{{- $envList = append $envList (dict "name" "DB_USERNAME" "valueFrom" (dict "configMapKeyRef" (dict "name" (printf "%s-app-config" (include "application.fullname" $)) "key" "DB_USERNAME"))) }}
+{{- $envList = append $envList (dict "name" "DB_PASSWORD" "value" "$(DATABASE_PASSWORD)") }}
+{{- else if or (eq $framework "wordpress") (eq $framework "symfony") }}
+{{- /* WordPress/Symfony use DATABASE_URL which is already added above */ -}}
+{{- end }}
 {{- end }}
 
 {{- /* Set environment variables on the container */ -}}
-{{- $_ := set $mainContainer "env" $envMap }}
+{{- $_ := set $mainContainer "env" $envList }}
+
+{{- /* MERGE the environment variables directly into the Values structure */ -}}
+{{- $_ := set .Values.controllers.main.containers.main "env" $envList }}
 
 {{- /* Build the main controller spec locally */ -}}
-{{- $controllerMain := dict }}
-{{- $_ := set $controllerMain "annotations" (default dict .Values.controllers.main.annotations) }}
-{{- $_ := set $controllerMain "labels" (default dict .Values.controllers.main.labels) }}
-{{- $_ := set $controllerMain "replicas" (default 1 .Values.controllers.main.replicas) }}
-{{- $_ := set $controllerMain "containers" (dict "main" $mainContainer) }}
+{{- $controllerMain := deepCopy .Values.controllers.main }}
 
 {{- /* Build the controllers map */ -}}
 {{- $controllers := dict "main" $controllerMain }}

@@ -59,7 +59,7 @@ ingress:
       - path: /
         pathType: Prefix
         service:
-          name: main
+          identifier: main
           port: http
     tls: []
 
@@ -67,26 +67,116 @@ ingress:
   test:
     enabled: false
 
-# Database connection configuration (example for MariaDB)
-database:
-  # MariaDB reference for operator-based dynamic detection
-  mariaDbRef:
-    name: "mariadb" # Name of MariaDB custom resource
-    namespace: "database" # Uses the same namespace as the release
+# MariaDB configuration
+mariadb:
+  # Enable MariaDB resources (database, user, grant, secret)
+  enabled: false
 
-  # Connection options for DATABASE_URL
-  options:
-    charset: "utf8mb4"
-    # Additional DBAL options
-    driverOptions: {}
-  # Optional: Override automatic detection with custom values
-  # server:
-  #   host: "custom-mariadb.example.com"
-  #   port: 3307
-  # options:
-  #   serverVersion: "10.6.0-MariaDB"
+  # Global configuration
+  global:
+    # MariaDB operator namespace (where the operator is installed)
+    mariadbOperatorNamespace: "mariadb-system"
 
-  # Persistence configuration
+  # Database configuration
+  database:
+    # Enable database creation
+    enabled: true
+    # Database name (if empty, will use {release-name}-db)
+    name: ""
+    # MariaDB instance reference
+    mariaDbRef:
+      # Name of the MariaDB instance
+      name: "mariadb"
+      # Namespace of the MariaDB instance (optional, defaults to release namespace)
+      namespace: ""
+    # Character set for the database
+    characterSet: "utf8mb4"
+    # Collation for the database
+    collate: "utf8mb4_unicode_ci"
+    # Additional labels for the database resource
+    labels: {}
+    # Additional annotations for the database resource
+    annotations: {}
+
+  # User configuration
+  user:
+    # Enable user creation
+    enabled: true
+    # Username (if empty, will use {release-name}-user)
+    name: ""
+    # Password secret configuration
+    passwordSecret:
+      # Name of the secret containing the password (if empty, will use {release-name}-password)
+      name: ""
+      # Key in the secret containing the password
+      key: "password"
+      # If true, will generate a secret with random password
+      generate: true
+      # Length of generated password  
+      passwordLength: 16
+    # Host from which the user can connect (% for any host)
+    host: "%"
+    # MariaDB instance reference
+    mariaDbRef:
+      # Name of the MariaDB instance
+      name: "mariadb"
+      # Namespace of the MariaDB instance (optional, defaults to release namespace)
+      namespace: ""
+    # Maximum user connections
+    maxUserConnections: 10
+    # Additional labels for the user resource
+    labels: {}
+    # Additional annotations for the user resource
+    annotations: {}
+
+  # Grant configuration
+  grant:
+    # Enable grant creation
+    enabled: true
+    # Database to grant permissions on (if empty, will use database name)
+    database: ""
+    # User to grant permissions to (if empty, will use user name)
+    username: ""
+    # Table to grant permissions on (* for all tables)
+    table: "*"
+    # Privileges to grant
+    privileges:
+    - "SELECT"
+    - "INSERT"
+    - "UPDATE"
+    - "DELETE"
+    - "CREATE"
+    - "DROP"
+    - "INDEX"
+    - "ALTER"
+    # Host from which the user can connect
+    host: "%"
+    # MariaDB instance reference
+    mariaDbRef:
+      # Name of the MariaDB instance
+      name: "mariadb"
+      # Namespace of the MariaDB instance (optional, defaults to release namespace)
+      namespace: ""
+    # Additional labels for the grant resource
+    labels: {}
+    # Additional annotations for the grant resource
+    annotations: {}
+
+  # Connection options for DATABASE_URL generation
+  connection:
+    # Database server options
+    server:
+      # Override host detection (leave empty for automatic detection)
+      host: ""
+      # Override port detection (leave empty for automatic detection)  
+      port: ""
+    # Connection options
+    options:
+      charset: "utf8mb4"
+      # Additional DBAL options
+      driverOptions: {}
+
+# Persistence configuration
 persistence:
   # App data persistence (for user uploads, cache, logs, etc.)
   app-data:
