@@ -46,9 +46,9 @@ metadata:
     {{- end }}
 spec:
   mariaDbRef:
-    name: {{ .Values.mariadb.database.mariaDbRef.name }}
-    {{- if .Values.mariadb.database.mariaDbRef.namespace }}
-    namespace: {{ .Values.mariadb.database.mariaDbRef.namespace }}
+    name: {{ .Values.mariadb.mariaDbRef.name }}
+    {{- if .Values.mariadb.mariaDbRef.namespace }}
+    namespace: {{ .Values.mariadb.mariaDbRef.namespace }}
     {{- end }}
   name: {{ include "application.databaseName" . }}
   characterSet: {{ .Values.mariadb.database.characterSet }}
@@ -75,9 +75,9 @@ metadata:
     {{- end }}
 spec:
   mariaDbRef:
-    name: {{ .Values.mariadb.user.mariaDbRef.name }}
-    {{- if .Values.mariadb.user.mariaDbRef.namespace }}
-    namespace: {{ .Values.mariadb.user.mariaDbRef.namespace }}
+    name: {{ .Values.mariadb.mariaDbRef.name }}
+    {{- if .Values.mariadb.mariaDbRef.namespace }}
+    namespace: {{ .Values.mariadb.mariaDbRef.namespace }}
     {{- end }}
   passwordSecretKeyRef:
     name: {{ include "application.passwordSecretName" . }}
@@ -107,9 +107,9 @@ metadata:
     {{- end }}
 spec:
   mariaDbRef:
-    name: {{ .Values.mariadb.grant.mariaDbRef.name }}
-    {{- if .Values.mariadb.grant.mariaDbRef.namespace }}
-    namespace: {{ .Values.mariadb.grant.mariaDbRef.namespace }}
+    name: {{ .Values.mariadb.mariaDbRef.name }}
+    {{- if .Values.mariadb.mariaDbRef.namespace }}
+    namespace: {{ .Values.mariadb.mariaDbRef.namespace }}
     {{- end }}
   privileges:
     {{- toYaml .Values.mariadb.grant.privileges | nindent 4 }}

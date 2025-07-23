@@ -85,7 +85,7 @@ This queries the Kubernetes API during template rendering to get the version
 */}}
 {{- define "application.mariadbVersion" -}}
 {{- $dbConfig := .Values.mariadb -}}
-{{- $mariadbRef := $dbConfig.database.mariaDbRef -}}
+{{- $mariadbRef := $dbConfig.mariaDbRef -}}
 {{- $namespace := $mariadbRef.namespace | default .Release.Namespace -}}
 {{- $resourceName := $mariadbRef.name -}}
 {{- $fallbackVersion := ($dbConfig.connection.options).serverVersion | default "10.11.0-MariaDB" -}}
@@ -130,7 +130,7 @@ This queries the Kubernetes API during template rendering to get the host
 */}}
 {{- define "application.mariadbHost" -}}
 {{- $dbConfig := .Values.mariadb -}}
-{{- $mariadbRef := $dbConfig.database.mariaDbRef -}}
+{{- $mariadbRef := $dbConfig.mariaDbRef -}}
 {{- $namespace := $mariadbRef.namespace | default .Release.Namespace -}}
 {{- $resourceName := $mariadbRef.name -}}
 {{- $defaultHost := printf "%s.%s.svc.cluster.local" $resourceName $namespace -}}
@@ -174,7 +174,7 @@ This queries the Kubernetes API during template rendering to get the port
 */}}
 {{- define "application.mariadbPort" -}}
 {{- $dbConfig := .Values.mariadb -}}
-{{- $mariadbRef := $dbConfig.database.mariaDbRef -}}
+{{- $mariadbRef := $dbConfig.mariaDbRef -}}
 {{- $namespace := $mariadbRef.namespace | default .Release.Namespace -}}
 {{- $resourceName := $mariadbRef.name -}}
 {{- $fallbackPort := ($dbConfig.connection.server).port | default 3306 -}}
@@ -360,8 +360,8 @@ Generate random password
 MariaDB reference namespace
 */}}
 {{- define "application.mariadbNamespace" -}}
-{{- if .Values.mariadb.database.mariaDbRef.namespace }}
-{{- .Values.mariadb.database.mariaDbRef.namespace }}
+{{- if .Values.mariadb.mariaDbRef.namespace }}
+{{- .Values.mariadb.mariaDbRef.namespace }}
 {{- else }}
 {{- .Release.Namespace }}
 {{- end }}

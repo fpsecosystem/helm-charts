@@ -6,4 +6,4 @@ helm upgrade --install laravel-demo . \
   --set controllers.main.containers.main.image.repository="webdevops/php-nginx" \
   --set controllers.main.containers.main.image.tag="8.4" \
   --set mariadb.enabled=true \
-  --set mariadb.database.mariaDbRef.name="framework-mariadb"
+  --set mariadb.mariaDbRef.name="framework-mariadb"

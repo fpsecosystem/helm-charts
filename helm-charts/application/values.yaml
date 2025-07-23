@@ -72,10 +72,12 @@ mariadb:
   # Enable MariaDB resources (database, user, grant, secret)
   enabled: false
 
-  # Global configuration
-  global:
-    # MariaDB operator namespace (where the operator is installed)
-    mariadbOperatorNamespace: "mariadb-system"
+  # MariaDB instance reference (used by all resources: Database, User, Grant)
+  mariaDbRef:
+    # Name of the MariaDB instance
+    name: "mariadb"
+    # Namespace of the MariaDB instance (optional, defaults to release namespace)
+    namespace: ""
 
   # Database configuration
   database:
@@ -83,12 +85,6 @@ mariadb:
     enabled: true
     # Database name (if empty, will use {release-name}-db)
     name: ""
-    # MariaDB instance reference
-    mariaDbRef:
-      # Name of the MariaDB instance
-      name: "mariadb"
-      # Namespace of the MariaDB instance (optional, defaults to release namespace)
-      namespace: ""
     # Character set for the database
     characterSet: "utf8mb4"
     # Collation for the database
@@ -116,12 +112,6 @@ mariadb:
       passwordLength: 16
     # Host from which the user can connect (% for any host)
     host: "%"
-    # MariaDB instance reference
-    mariaDbRef:
-      # Name of the MariaDB instance
-      name: "mariadb"
-      # Namespace of the MariaDB instance (optional, defaults to release namespace)
-      namespace: ""
     # Maximum user connections
     maxUserConnections: 10
     # Additional labels for the user resource
@@ -151,12 +141,6 @@ mariadb:
     - "ALTER"
     # Host from which the user can connect
     host: "%"
-    # MariaDB instance reference
-    mariaDbRef:
-      # Name of the MariaDB instance
-      name: "mariadb"
-      # Namespace of the MariaDB instance (optional, defaults to release namespace)
-      namespace: ""
     # Additional labels for the grant resource
     labels: {}
     # Additional annotations for the grant resource
