@@ -5,6 +5,41 @@ entries:
       category: Application
     apiVersion: v2
     appVersion: 1.0.0
+    created: "2025-07-23T20:46:47.07678763Z"
+    dependencies:
+    - name: common
+      repository: https://bjw-s-labs.github.io/helm-charts
+      version: 4.0.1
+    description: Universal PHP application chart for WordPress, Laravel, Symfony with
+      framework detection and automatic database configuration
+    digest: bd9691ef2dd9e21b1bf2bac0aaa2508b2ea7dd3ad2f23086d3b688d2e64b0ebd
+    home: https://github.com/fpsecosystem/helm-charts
+    icon: https://raw.githubusercontent.com/fpsecosystem/helm-charts/main/logo.png
+    keywords:
+    - php
+    - symfony
+    - laravel
+    - wordpress
+    - application
+    - mariadb
+    - database
+    - web-application
+    - framework-detection
+    - universal-chart
+    maintainers:
+    - email: contact@fpsecosystem.org
+      name: FPS Ecosystem
+    name: application
+    sources:
+    - https://github.com/fpsecosystem/helm-charts/tree/main/application
+    type: application
+    urls:
+    - https://github.com/fpsecosystem/helm-charts/releases/download/application-0.4.0/application-0.4.0.tgz
+    version: 0.4.0
+  - annotations:
+      category: Application
+    apiVersion: v2
+    appVersion: 1.0.0
     created: "2025-06-01T15:39:22.456443154Z"
     dependencies:
     - name: common
@@ -184,4 +219,4 @@ entries:
     urls:
     - mariadb-library-chart-0.1.1.tgz
     version: 0.1.1
-generated: "2025-06-01T15:39:22.698210316Z"
+generated: "2025-07-23T20:46:47.213741546Z"
